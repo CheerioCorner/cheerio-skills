@@ -34,6 +34,12 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 | notion-to-raw | Notion → raw 抓取 |
 | plannotator-sync | Plannotator → raw 同步 |
 
+### 🔧 Meta（Repo 管理）
+
+| Skill | 說明 |
+|-------|------|
+| skills-repo-manager | 管理 cheerio-skills repo 同步與更新 |
+
 ## Repository 結構
 
 ```
@@ -44,7 +50,8 @@ skills/
 ├── youtube-to-wiki/SKILL.md
 ├── work-tracker/SKILL.md
 ├── notion-to-raw/SKILL.md
-└── plannotator-sync/SKILL.md
+├── plannotator-sync/SKILL.md
+└── skills-repo-manager/SKILL.md
 ```
 
 ## License
