@@ -21,6 +21,7 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 
 | Skill | 說明 |
 |-------|------|
+| copilot | 呼叫 GitHub Copilot CLI 執行任務 |
 | knowledge-garden | Notion 知識花園管理 |
 | knowledge-garden-trigger | 知識花園自動觸發研究 |
 | knowledge-garden-visualmap | 種子/專題視覺地圖 |
@@ -52,6 +53,7 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 
 ```
 skills/
+├── copilot/SKILL.md
 ├── gemini-deep-research/SKILL.md
 ├── gemini-notion-workflow/SKILL.md
 ├── knowledge-garden/SKILL.md
