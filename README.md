@@ -30,6 +30,7 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 |-------|------|
 | wiki-knowledge | Obsidian 知識庫 ingest/query/lint |
 | youtube-to-wiki | YouTube → raw → wiki |
+| pdf-to-wiki | PDF → Markdown → raw → wiki |
 | work-tracker | 工作狀態管理 |
 | notion-to-raw | Notion → raw 抓取 |
 | plannotator-sync | Plannotator → raw 同步 |
@@ -48,6 +49,7 @@ skills/
 ├── notion-cli/SKILL.md
 ├── wiki-knowledge/SKILL.md
 ├── youtube-to-wiki/SKILL.md
+├── pdf-to-wiki/SKILL.md
 ├── work-tracker/SKILL.md
 ├── notion-to-raw/SKILL.md
 ├── plannotator-sync/SKILL.md
