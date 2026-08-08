@@ -11,7 +11,10 @@ description: 維護本機 Obsidian 知識庫。實作 ingest（吸收新資料�
 
 ```
 Obsidian/
-├── raw/              # 原始資料與 raw conversations（只讀）
+├── raw/              # 原始資料（只讀，圖片由 Obsidian 內建處理）
+│   ├── web/          # Web Clipper 剪藏
+│   ├── youtube/      # YouTube 字幕/逐字稿
+│   └── conversations/# 原始對話
 ├── projects/         # Project OKF Bundles（跨 session、跨環境）
 ├── wiki/             # Shared cross-project knowledge graph
 │   ├── concepts/     # 可跨專案重用的抽象知識
@@ -20,14 +23,13 @@ Obsidian/
 │   ├── decisions/    # 全域／跨專案已確認決策
 │   ├── discussions/  # 尚未定案的討論
 │   ├── topics/       # 導航／taxonomy 層，只放 topic 導航頁
+│   ├── visualizations/ # Canvas 視覺化投影
 │   ├── audits/       # audit 報告
-│   ├── index.md      # 內容索引
+│   ├── index.md      # 內容索引（導航樞紐）
 │   └── log.md        # 時間日誌（append-only）
-├── work/             # 可追溯工作狀態與歷史事件
-│   ├── README.md     # work contract
-│   ├── current.md    # 唯一的目前工作清單
-│   └── history/      # 按月分片的完成／決策／活動事件
-├── journal/          # 日記系統
+├── work/             # 工作狀態與可追溯歷史
+│   ├── current.md    # 目前工作
+│   └── history/      # 月分片歷史事件
 └── AGENTS.md         # 工作規範（完整規範在此）
 ```
 
@@ -40,8 +42,12 @@ Obsidian/
 - `wiki/decisions/` = 全域／跨專案已確認決策。
 - `wiki/discussions/` = 尚未定案的方案與研究問題。
 - `wiki/topics/` = 導航與 taxonomy，只放 topic 導航頁；不得建立 canonical content 副本或 compatibility stub。
-- `work/` = 唯一的工作狀態與可追溯事件系統。
-- `journal/` = 日記系統。由 Obsidian Daily Notes + Calendar 外掛管理；保存活動敘事，不取代工作狀態。
+- `wiki/visualizations/` = Canvas 視覺化投影；Canvas 不取代 canonical page。每張 Canvas 必須在 `visualizations/README.md` 註冊並標示所屬 topics，對應 topic page 的 `## Visualizations` 區塊須列出。
+- `work/` = 工作狀態與可追溯歷史。
+
+**Graph View 設定：**
+- 排除：`work/`、`wiki/log.md`、`README.md`、`raw/`、`wiki/visualizations/`
+- 只顯示：entities、concepts、sources、topics、decisions、discussions
 
 ## Git 同步（跨機器協作）
 
@@ -86,18 +92,20 @@ git pull           # 確保拿到最新版
 ### 步驟
 
 1. **讀取來源** — 從 `raw/` 讀取新檔案。文字一次讀完，圖片另外分批讀。
+   - **PDF 檔案**：使用 `pdf-to-wiki` skill（`markitdown` 轉 Markdown + `pymupdf` 提取圖片）
 2. **與人類確認重點** — 討論要提取什麼知識點、有沒有特殊要求。
 3. **建立/更新 wiki 頁面**：一個來源可能動到多頁：
    - 建立**來源筆記**（`wiki/sources/YYYY-MM-DD-title.md`）— 1 頁彙整該資料重點，**⚠️ 必須在 frontmatter 加入 `provenance` 指向 raw 檔案**（格式見下方 Frontmatter 規範）
    - 更新相關 canonical collection pages（`wiki/concepts/`、`wiki/entities/`、`wiki/sources/`），加入 `[[wikilink]]` 雙向連結
    - 尚未定案的內容放 `wiki/discussions/`；已確認的全域選擇放 `wiki/decisions/`
-   - **⚠️ Topic pages 必須同步更新**：每當新增或更新 entity/concept 頁面，必須同時更新對應的 `wiki/topics/*.md` 導航頁：
+   - **⚠️ Topic pages 必須同步更新**：每當新增或更新 entity/concept/source 頁面，必須同時更新對應的 `wiki/topics/*.md` 導航頁：
      - 檢查新頁面 frontmatter 的 `topics: [...]` 欄位
-     - 在每個相關 topic 導航頁的 Entities 或 Concepts 列表中加入新頁面
+     - 在每個相關 topic 導航頁的 Entities、Concepts 或 Sources 列表中加入新頁面
      - 用 🛠️ 標記跨 topic 頁面
      - **驗證方法**：新增頁面後，逐一讀取每個相關 topic page，確認新頁面已列入
    - 標記新資料是否推翻／補充既有結論
-4. **更新索引** — 修改 `wiki/index.md`（加入新頁或更新摘要），確保 Topics 區塊也反映 topic pages 的變更
+   - **Canvas 建立時**：存入 `wiki/visualizations/`，在 `visualizations/README.md` 註冊並標示所屬 topics，並在對應 topic page 的 `## Visualizations` 區塊列出
+4. **更新索引** — 修改 `wiki/index.md`（加入新頁或更新摘要），確保 Topics 區塊也反映 topic pages 的 變更
 5. **寫日誌** — 在 `wiki/log.md` 最上方 append 一筆 ingest 紀錄（格式見 AGENTS.md §5.2）
 6. **推送回 GitHub** — 執行 git 同步（commit + push）
 
@@ -167,7 +175,8 @@ provenance:               # source 類型必填；其他類型可選
    - 缺漏的交叉引用
    - Frontmatter 格式不一致（缺少必填欄位、格式錯誤）
    - **Source note provenance 缺漏**：`wiki/sources/` 下的頁面應有 `provenance` 指向 raw 檔案或外部 URL；指向不存在檔案的 provenance 須標記
-   - **Topic page 遺漏**：每個 entity/concept 的 `topics: [...]` 都應在對應 `wiki/topics/*.md` 列出；topic page 列出的頁面都應存在且 frontmatter topics 包含該 topic
+   - **Topic page 遺漏**：每個 entity/concept/source 的 `topics: [...]` 都應在對應 `wiki/topics/*.md` 的 Entities、Concepts 或 Sources 列表中列出；topic page 列出的頁面都應存在且 frontmatter topics 包含該 topic
+   - **Canvas 遺漏**：`wiki/visualizations/*.canvas` 都應在 `visualizations/README.md` 註冊並標示 topics；對應 topic page 的 `## Visualizations` 區塊須列出相關 Canvas
 2. **提出清單** — 「該修什麼、該查什麼、該補什麼資料」
 3. **人類確認後修改**
 4. **推送回 GitHub** — 修改完成後執行 git 同步（commit + push）
@@ -176,6 +185,7 @@ provenance:               # source 類型必填；其他類型可選
 
 ## 參考
 
-- 完整規範：`C:/Cheerio/Obsidian/AGENTS.md`
+- 完整規範：[`C:/Cheerio/Obsidian/AGENTS.md`](file:///C:/Cheerio/Obsidian/AGENTS.md)
 - 索引頁：`wiki/index.md`
 - 日誌頁：`wiki/log.md`
+- 任務系統：`todos/README.md`

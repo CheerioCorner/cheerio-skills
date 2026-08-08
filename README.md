@@ -22,7 +22,14 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 | Skill | 說明 |
 |-------|------|
 | knowledge-garden | Notion 知識花園管理 |
+| knowledge-garden-trigger | 知識花園自動觸發研究 |
+| knowledge-garden-visualmap | 種子/專題視覺地圖 |
 | notion-cli | Notion CLI 操作 |
+| notion-page-content | Notion 頁面內容產生 |
+| notion-wiki-feedback | Notion → Wiki 回流機制 |
+| gemini-notion-workflow | Gemini + Notion 整合工作流 |
+| learning-loop | 自動學習優化系統 |
+| todos | 任務管理 |
 
 ### 📚 Obsidian-dependent（需要 vault 結構）
 
@@ -45,15 +52,24 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 
 ```
 skills/
+├── gemini-deep-research/SKILL.md
+├── gemini-notion-workflow/SKILL.md
 ├── knowledge-garden/SKILL.md
+├── knowledge-garden-trigger/SKILL.md
+├── knowledge-garden-visualmap/SKILL.md
+├── learning-loop/SKILL.md
 ├── notion-cli/SKILL.md
-├── wiki-knowledge/SKILL.md
-├── youtube-to-wiki/SKILL.md
-├── pdf-to-wiki/SKILL.md
-├── work-tracker/SKILL.md
+├── notion-page-content/SKILL.md
 ├── notion-to-raw/SKILL.md
+├── notion-wiki-feedback/SKILL.md
+├── pdf-to-wiki/SKILL.md
+├── pi-plannotator-auto/SKILL.md
 ├── plannotator-sync/SKILL.md
-└── skills-repo-manager/SKILL.md
+├── skills-repo-manager/SKILL.md
+├── todos/SKILL.md
+├── wiki-knowledge/SKILL.md
+├── work-tracker/SKILL.md
+└── youtube-to-wiki/SKILL.md
 ```
 
 ## License
