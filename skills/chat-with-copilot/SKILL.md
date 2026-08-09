@@ -1,6 +1,6 @@
 ---
-name: copilot
-description: 呼叫 GitHub Copilot CLI 執行任務。Pi 負責啟動、等待結果、讀取 log。當使用者提到「問 Copilot」、「用 Copilot」、「copilot」或 slash command `/copilot` 時使用。
+name: chat-with-copilot
+description: 呼叫 GitHub Copilot CLI 執行任務。Pi 負責啟動、等待結果、讀取 log。當使用者提到「問 Copilot」、「用 Copilot」、「chat-with-copilot」、「copilot」或 slash command `/copilot` 時使用。
 ---
 
 # Copilot Agent

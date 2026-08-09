@@ -1,5 +1,5 @@
 ---
-name: gemini-deep-research
+name: chat-with-gemini-research
 description: "使用 Gemini 進行深度研究，強制要求引用出處與 citations。適用於：需要多角度調查的主題、需要引用來源的研究任務、「深度研究」、「用 Gemini 研究」、「research with Gemini」等情境。自動整合進 Obsidian 知識庫。"
 argument-hint: <研究主題或問題>
 ---
