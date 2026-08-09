@@ -124,13 +124,121 @@ ntn api v1/pages/<page-id> -X PATCH -d '{"icon": {"type": "emoji", "emoji": "�
 
 1. **找到對應頁面** — 根據使用者描述定位 Notion 子頁
 2. **讀取現有內容** — `ntn pages get <page-id>`
-3. **更新成長階段** — 根據進展調整：
+3. **讀取 wiki 頁面** — 如果有對應的 wiki 頁面，讀取最新內容
+4. **檢查 GitHub 更新** — 如果有來源 URL，檢查上游最新資訊
+5. **更新成長階段** — 根據進展調整：
    - 🌱 種子期 — 剛開始觀察
    - 🌿 成長期 — 有實際使用經驗
    - 🌳 成熟期 — 已內化為自己的方法
-4. **更新內容** — 加入新的觀察、比較結果、或已改編的方法
-5. **更新成長計畫** — 把已完成的項目打勾，加入新項目
-6. **同步本地 manifest**（詳見 §Manifest 自動同步）
+6. **更新內容** — 加入新的觀察、比較結果、或已改編的方法
+7. **更新成長計畫** — 把已完成的項目打勾，加入新項目
+8. **同步本地 manifest**（詳見 §Manifest 自動同步）
+
+### 2.1 批量更新（Batch Update）
+
+**觸發條件：** 使用者說「更新所有種子」、「sync all seeds」、「批量更新」等。
+
+**流程：**
+
+1. **查詢所有種子** — 取得 Database 中所有種子列表
+2. **依序處理每個種子：**
+   - 讀取 Notion 頁面
+   - 讀取 wiki 頁面（如有）
+   - 檢查 GitHub 更新（如有來源 URL）
+   - 評估成長狀態
+   - 執行更新（如需要）
+3. **產生摘要報告** — 列出所有變更
+
+**批量更新指令範例：**
+```bash
+# 查詢所有種子
+ntn api v1/data_sources/0785b58a-9976-4163-85be-6854410b6563/query -d '{}'
+
+# 依序更新每個種子
+for seed_id in <seed_ids>; do
+  ntn pages get $seed_id
+  # 讀取 wiki、檢查 GitHub、評估狀態、執行更新
+done
+```
+
+### 2.2 狀態評估（Growth Evaluation）
+
+**觸發條件：** 使用者說「評估狀態」、「check growth」、「要不要升級」等。
+
+**評估標準：**
+
+| 面向 | 🌱 種子期 | 🌿 成長期 | 🌳 成熟期 |
+|------|----------|----------|----------|
+| Wiki 頁面 | ≤1 個 | 2-3 個 | ≥4 個 |
+| 實際使用 | 無 | 有經驗 | 持續使用 |
+| 視覺地圖 | 無 | 有 | 有且更新 |
+| 視覺地圖 | 無 | 有 | 有且更新 |
+| 文件完整度 | 基礎 | 完整 | 完整 + 範例 |
+
+**評估流程：**
+
+1. 讀取種子頁面
+2. 搜尋相關 wiki 頁面數量
+3. 檢查是否有視覺地圖
+4. 檢查成長計畫完成度
+5. 根據標準判斷狀態
+6. 建議升級/維持/降級
+
+**評估報告範例：**
+```
+📊 Omnigent 狀態評估
+
+目前狀態：🌱 種子期
+建議狀態：🌱 種子期（維持）
+
+評估：
+- Wiki 頁面：1 個（omnigent.md）→ ✅ 符合種子期
+- 實際使用：無 → ⚠️ 未開始使用
+- 視覺地圖：有 → ✅ 已建立
+- 文件完整度：基礎 → ⚠️ 可再補充
+
+建議：
+- 等實際測試 WSL2 後再考慮升級
+```
+
+### 2.3 GitHub 更新檢查（GitHub Update Check）
+
+**觸發條件：** 使用者說「檢查更新」、「check updates」、「有沒有新版本」等。
+
+**流程：**
+
+1. 讀取種子的「來源 URL」屬性
+2. 從 URL 提取 GitHub repo 資訊
+3. 使用 GitHub API 檢查：
+   ```bash
+   # 取得 repo 資訊
+   curl -sL https://api.github.com/repos/<owner>/<repo>
+   
+   # 取得最新 release
+   curl -sL https://api.github.com/repos/<owner>/<repo>/releases/latest
+   
+   # 取得最近 commits
+   curl -sL https://api.github.com/repos/<owner>/<repo>/commits?per_page=5
+   ```
+4. 比較與我們 wiki 記錄的差異
+5. 報告需要更新的項目
+
+**GitHub 檢查報告範例：**
+```
+🔍 OpenCodeReview GitHub 更新檢查
+
+Repo: alibaba/open-code-review
+Stars: 19,743（我們記錄：19,300）
+最近更新：2026-08-08
+
+需要更新：
+- ⭐ Stars 增加 443
+- 📝 最近 5 個 commits 有新功能
+
+建議：
+- 更新 wiki 頁面的 stars 數據
+- 檢查是否有新功能需要記錄
+```
 
 ### 3. 查詢花園（query）
 
@@ -166,57 +274,14 @@ ntn api v1/pages/<page-id> -X PATCH -d '{"icon": {"type": "emoji", "emoji": "�
 
 ## 頁面模板
 
-新增 seedling 時使用以下模板結構：
+⚠️ **頁面內容由 `knowledge-garden-page-content` skill 專責產生。**
 
-```markdown
-# [名稱] — [一句話描述]
+當需要建立或更新頁面內容時：
+1. 讀取 Schema：`schemas/seed_schema.yaml`（位於本 Skill 目錄下；完整路徑為 `~/.agents/skills/knowledge-garden/schemas/seed_schema.yaml`）
+2. 載入 `knowledge-garden-page-content` skill
+3. 根據成長階段選擇對應模板（Quick Draft 或 Enriched）
 
-> **來源：** [URL 或出處]
-> **種下日期：** YYYY-MM-DD
-> **成長階段：** 🌱 種子期 | 🌿 成長期 | 🌳 成熟期
-> **Icon：** 🌱（用 API 設定，不要放在標題裡）
-
----
-
-## 種子故事
-
-[為什麼種下這顆種子？它跟什麼有關？]
-
----
-
-## 這棵樹苗帶給我什麼
-
-### 🔑 我認同的（已內化的部分）
-
-| 概念 | 來源的說法 | 我的做法 |
-|------|-----------|---------|
-| ... | ... | ... |
-
-### 🌿 需要比較的（差異探索）
-
-| 概念 | 來源的做法 | 我的做法 | 觀察 |
-|------|-----------|---------|------|
-| ... | ... | ... | ... |
-
-### 🌳 未來可能長成的（待發展）
-
-1. ...
-2. ...
-
----
-
-## 成長計畫
-
-- [ ] 項目 1
-- [ ] 項目 2
-
----
-
-## 連結
-
-- 🔗 [原始來源](url)
-- 📖 [Obsidian Wiki 頁面](link)（如有）
-```
+本 skill 只負責流程調度（建立記錄、更新狀態、同步 manifest），不負責頁面內容生成。
 
 ## 花園階段定義
 
@@ -292,3 +357,29 @@ raw/ ──wiki ingest──► wiki/ ──美化/整理──► Notion 花園
 4. **不急於收割** — 知識需要時間沉澱
 5. **記錄變化** — 每次更新都記錄成長軌跡
 6. **同步 manifest** — 每次更新花園後，同步更新本地 manifest（自動，詳見 §Manifest 自動同步）
+
+---
+
+## 相關 Skills
+
+- `wiki-ingest` — 吸收新資料進 wiki
+- `wiki-query` — 查詢 wiki 內容
+- `wiki-lint` — 健康檢查
+- `knowledge-garden-page-content` — 頁面內容產生（wiki → Notion 方向）
+- `knowledge-garden-to-raw` — Notion → raw 抓取（反向流程）
+- `knowledge-garden-trigger` — 觸發偵測與回流
+- `knowledge-garden-visualmap` — 視覺地圖
+- `notion-cli` — Notion CLI 命令參考
+
+---
+
+## 快速指令參考
+
+| 指令 | 功能 | 範例 |
+|------|------|------|
+| `更新 <種子名稱>` | 更新單一種子 | `更新 Omnigent` |
+| `更新所有種子` | 批量更新 | `sync all seeds` |
+| `評估 <種子名稱> 狀態` | 評估成長狀態 | `評估 Omnigent 狀態` |
+| `檢查 <種子名稱> 更新` | 檢查 GitHub 更新 | `檢查 OpenCodeReview 更新` |
+| `查詢花園` | 列出所有種子 | `花園裡有什麼` |
+| `建立視覺地圖 <種子>` | 建立視覺地圖 | `幫 Omnigent 畫地圖` |

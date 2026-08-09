@@ -5,7 +5,7 @@ description: 管理 Obsidian 的可追溯工作狀態。當使用者提到工作
 
 # Work Tracker Skill
 
-管理 `C:/Cheerio/Obsidian/work/`。由 agent 依照本 skill 直接維護 Markdown。
+管理 `C:/Cheerio/Obsidian/work/`。目前不依賴任何 `pi-work-tracker` extension；由 agent 依照本 skill 直接維護 Markdown。
 
 ## 啟動檢查
 
@@ -72,7 +72,7 @@ description: 管理 Obsidian 的可追溯工作狀態。當使用者提到工作
 - status: completed | decision-recorded | blocked | note
 ```
 
-History 按月分片。
+History 按月分片。不要建立 daily journal，也不要建立 `todos/` 的 current、backlog 或 done。
 
 ## 追溯規則
 
@@ -89,3 +89,6 @@ History 按月分片。
 - `raw/`：不可變原始輸入
 - `wiki/`：整理後的 canonical knowledge
 - `projects/`：專案 bundle
+- session checkpoint：若沒有 extension，依 agent session 行為處理；不把 checkpoint 當成 history event
+- `pi-work-tracker`：未安裝，延後另行設計
+- 舊 `todos/` 與 `journal/` 已完成遷移並刪除，不得重新建立或引用

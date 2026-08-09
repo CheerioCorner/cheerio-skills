@@ -231,7 +231,7 @@ read({ path: "C:/Cheerio/Obsidian/<wiki-path>" })
 
 ### 視覺地圖（Visual Map）
 
-視覺地圖的 content 存在 Notion 子頁面，重點是**解讀圖表**。
+視覺地圖的 content 存在 Notion 子頁面，**直接寫入 Mermaid code block**（不需要轉換為圖片）。
 
 ```markdown
 # 🗺️ [地圖名稱]
