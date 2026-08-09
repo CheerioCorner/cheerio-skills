@@ -1,5 +1,5 @@
 ---
-name: youtube-to-wiki
+name: wiki-youtube
 description: "從 YouTube 影片建立 wiki 頁面。抓字幕 → 建 source note → 建 entity/concept pages → 更新 index + log。使用時機：使用者提到「YouTube ingest」、「抓字幕」、「YouTube → wiki」或提供 YouTube 連結要求處理時。"
 argument-hint: <YouTube URL or video ID>
 ---

@@ -1,5 +1,5 @@
 ---
-name: pdf-to-wiki
+name: wiki-pdf
 description: "從 PDF 檔案建立 wiki 頁面。markitdown 轉 Markdown → 提取圖片 → 建 source note → 建 entity/concept pages → 更新 index + log。使用時機：使用者提到「PDF ingest」、「處理 PDF」、「PDF → wiki」或提供 PDF 檔案路徑要求處理時。"
 argument-hint: <PDF 檔案路徑>
 ---
@@ -76,7 +76,7 @@ for page_num in range(len(doc)):
 doc.close()
 ```
 
-**備註：** PyMuPDF 是 pdf-to-wiki 的永久依賴，保留安裝。
+**備註：** PyMuPDF 是 wiki-pdf 的永久依賴，保留安裝。
 
 #### 1c. 整合文字 + 圖片
 
@@ -170,15 +170,15 @@ provenance_raw: "raw/web/YYYY-MM-DD-filename.md"
 
 #### Entity page（`wiki/entities/<name>.md`）
 
-建立方式同 youtube-to-wiki skill。
+建立方式同 wiki-youtube skill。
 
 ### Step 6：Topic 導航更新
 
-同 youtube-to-wiki skill Step 5。
+同 wiki-youtube skill Step 5。
 
 ### Step 7：更新索引與日誌
 
-同 youtube-to-wiki skill Step 6。
+同 wiki-youtube skill Step 6。
 
 ### Step 8：Git 同步
 
