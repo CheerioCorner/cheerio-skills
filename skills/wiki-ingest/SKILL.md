@@ -29,11 +29,18 @@ git pull           # 確保拿到最新版
 - **圖片**：分批讀取
 - **PDF 檔案**：使用 `wiki-pdf` skill（`markitdown` 轉 Markdown + `pymupdf` 提取圖片）
 
-### 2. 與人類確認重點
+### 2. 查詢既有知識（避免重複）
+
+在建立新頁面之前，先查詢 wiki 是否已有相關內容：
+- 讀 `wiki/index.md` 找相關頁面
+- 讀那些頁面，了解現有知識
+- 決定是建立新頁面還是更新現有頁面
+
+### 3. 與人類確認重點
 
 討論要提取什麼知識點、有沒有特殊要求。
 
-### 3. 建立/更新 wiki 頁面
+### 4. 建立/更新 wiki 頁面
 
 一個來源可能動到多頁：
 
@@ -46,15 +53,15 @@ git pull           # 確保拿到最新版
 - 標記新資料是否推翻／補充既有結論
 - **Canvas 建立時**：存入 `wiki/visualizations/`，在 `visualizations/README.md` 註冊
 
-### 4. 更新索引
+### 5. 更新索引
 
 修改 `wiki/index.md`（加入新頁或更新摘要），確保 Topics 區塊也反映 topic pages 的變更。
 
-### 5. 寫日誌
+### 6. 寫日誌
 
 在 `wiki/log.md` 最上方 append 一筆 ingest 紀錄。
 
-### 6. 推送回 GitHub
+### 7. 推送回 GitHub
 
 ```bash
 git add -A
@@ -95,6 +102,30 @@ provenance:               # source 類型必填；其他類型可選
 - `raw/` 永遠只讀不寫
 - 優先使用 vault-root 完整路徑，例如 `[[wiki/entities/pi-mono|pi-mono]]`
 - 新 journal 與正文 link 一律優先使用 canonical vault-root path
+- **不篩選**：所有 raw 都會被消化，LLM 不能決定「什麼有價值」
+- **先查詢再寫入**：避免重複，自動建立交叉引用
+
+## 職責劃分
+
+### wiki-ingest 負責
+- 讀取 `raw/` 或 `staging/` → 查重 → 合成與寫入主庫
+- 處理人類確認後的回填草稿
+- 建立/更新 wiki 頁面
+
+### wiki-query 負責（不在本 skill 範圍）
+- 查詢 → 讀取 Index → 合成有引用回答
+- 產生 Backfill 暫存檔案至 `staging/`
+- 評估洞察品質（信心度）
+
+## 處理 Staging Buffer
+
+當收到人類確認的回填草稿時：
+
+1. 讀取 `wiki/staging/` 中的草稿
+2. 驗證 metadata 完整性
+3. 移入 wiki/ 相應目錄（concepts/entities/sources）
+4. 更新 index.md 和 log.md
+5. 刪除 Staging 中的草稿
 
 ---
 

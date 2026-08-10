@@ -31,47 +31,48 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 | gemini-notion-workflow | Gemini + Notion 整合工作流 |
 | learning-loop | 自動學習優化系統 |
 | todos | 任務管理 |
+| round-table | 多 AI 圓桌會議 |
 
 ### 📚 Obsidian-dependent（需要 vault 結構）
 
 | Skill | 說明 |
 |-------|------|
 | wiki-knowledge | Obsidian 知識庫 ingest/query/lint |
-| youtube-to-wiki | YouTube → raw → wiki |
-| pdf-to-wiki | PDF → Markdown → raw → wiki |
+| wiki-ingest | 從 raw/ 資料建立或更新 wiki 頁面（含 Staging Buffer） |
+| wiki-lint | 健康檢查（結構+品質+半衰期+矛盾+Source Fidelity） |
+| wiki-query | 查詢 wiki 內容 |
+| wiki-pdf | PDF → Markdown → raw → wiki |
+| wiki-youtube | YouTube → raw → wiki |
 | work-tracker | 工作狀態管理 |
 | notion-to-raw | Notion → raw 抓取 |
 | plannotator-sync | Plannotator → raw 同步 |
-
-### 🔧 Meta（Repo 管理）
-
-| Skill | 說明 |
-|-------|------|
-| skills-repo-manager | 管理 cheerio-skills repo 同步與更新 |
 
 ## Repository 結構
 
 ```
 skills/
-├── copilot/SKILL.md
-├── gemini-deep-research/SKILL.md
+├── chat-with-copilot/SKILL.md
+├── chat-with-gemini/SKILL.md
+├── chat-with-gemini-research/SKILL.md
 ├── gemini-notion-workflow/SKILL.md
 ├── knowledge-garden/SKILL.md
+├── knowledge-garden-page-content/SKILL.md
+├── knowledge-garden-to-raw/SKILL.md
 ├── knowledge-garden-trigger/SKILL.md
 ├── knowledge-garden-visualmap/SKILL.md
 ├── learning-loop/SKILL.md
 ├── notion-cli/SKILL.md
-├── notion-page-content/SKILL.md
-├── notion-to-raw/SKILL.md
-├── notion-wiki-feedback/SKILL.md
-├── pdf-to-wiki/SKILL.md
 ├── pi-plannotator-auto/SKILL.md
 ├── plannotator-sync/SKILL.md
-├── skills-repo-manager/SKILL.md
+├── round-table/SKILL.md
 ├── todos/SKILL.md
+├── wiki-ingest/SKILL.md
 ├── wiki-knowledge/SKILL.md
-├── work-tracker/SKILL.md
-└── youtube-to-wiki/SKILL.md
+├── wiki-lint/SKILL.md
+├── wiki-pdf/SKILL.md
+├── wiki-query/SKILL.md
+├── wiki-youtube/SKILL.md
+└── work-tracker/SKILL.md
 ```
 
 ## License
