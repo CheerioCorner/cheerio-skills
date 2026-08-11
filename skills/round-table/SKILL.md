@@ -1,11 +1,11 @@
 ---
 name: round-table
-description: 多 AI 圓桌會議。Pi 主持，派出 subagent（使用者指定模型）+ Gemini + Copilot 共同討論。觸發詞：「圓桌會議」、「round table」、「多方討論」、「一起討論」。
+description: 多 AI 圓桌會議。Pi 主持，派出 subagent（使用者指定模型）+ Claude + Gemini + Copilot 共同討論。觸發詞：「圓桌會議」、「round table」、「多方討論」、「一起討論」。
 ---
 
 # Round Table — 多 AI 圓桌會議
 
-Pi 擔任主持人（不參與討論），派出 subagent 作為參與者，搭配 Gemini 和 Copilot 進行序列討論。使用者可指定 subagent 的數量和模型。
+Pi 擔任主持人（不參與討論），派出 subagent 作為參與者，搭配 Claude、Gemini 和 Copilot 進行序列討論。使用者可指定 subagent 的數量和模型。
 
 ## 架構
 
@@ -15,9 +15,9 @@ Pi (主持人 — 不坐在桌上)
   ├──派出 subagent A ─── model: 使用者指定
   ├──派出 subagent B ─── model: 使用者指定（可選）
   │
-  ┌─────────────────────────────────────────────┐
-  │  Sub A  │  Sub B  │  Gemini  │  Copilot    │
-  └─────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────┐
+  │  Sub A  │  Sub B  │  Claude  │  Gemini  │  Copilot  │
+  └─────────────────────────────────────────────────────┘
          每輪由 Pi 決定誰先說
          Round 1 → Round 2 → ... → Round N
          Pi 摺疊 → 會議紀要
@@ -42,6 +42,10 @@ subagents:
 
 context: {檔案路徑}               # 可選
 maxRounds: 3                      # 可選，預設 3
+participants:                     # 可選，預設全部
+  - claude                        # 預設開啟
+  - gemini                        # 預設開啟
+  - copilot                       # 預設開啟
 ```
 
 ## 完整流程
@@ -95,7 +99,7 @@ Pi 分析前一輪的發言（第一輪則沒有），決定本輪誰先說。
 
 對順序中的每個參與者，依類型呼叫：
 
-**Subagent 參與者：**
+**Subagent 參與者（Claude 作為 subagent 時）：**
 ```javascript
 const result = await runs.run('player-A', {
   resume: 'run-id-of-player-A',  // 繼續之前的 subagent
@@ -107,6 +111,19 @@ ${allPreviousStatements}
 請發表你的觀點。回應前面所有人的發言。`
 })
 // 讀取 result.output 存到 round-N-player-a.md
+```
+
+**Claude 參與者：**
+```bash
+# 寫 prompt 到臨時檔案（避免 shell 轉義問題）
+echo "${prompt}" > .pi/round-table/${id}/round-${n}-claude-prompt.txt
+
+# 執行 claude
+claude -p "$(cat .pi/round-table/${id}/round-${n}-claude-prompt.txt)" \
+  --output-format json \
+  > .pi/round-table/${id}/round-${n}-claude.log 2>&1
+
+# 讀取結果（從 log 中提取回應）
 ```
 
 **Gemini 參與者：**
@@ -139,6 +156,7 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 
 每位參與者的發言存到：
 - `round-N-player-a.md`（subagent）
+- `round-N-claude.md`（Claude）
 - `round-N-gemini.md`（Gemini）
 - `round-N-copilot.md`（Copilot）
 
@@ -176,7 +194,7 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 1. ...
 
 ## 完整討論紀錄
-- Round 1: [Player A](round-1-player-a.md) → [Gemini](round-1-gemini.md) → [Copilot](round-1-copilot.md)
+- Round 1: [Player A](round-1-player-a.md) → [Claude](round-1-claude.md) → [Gemini](round-1-gemini.md) → [Copilot](round-1-copilot.md)
 - ...
 ```
 
@@ -186,7 +204,7 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 
 ```markdown
 ### YYYY-MM-DD 圓桌會議：{topic}
-- 參與者：Player A (claude-sonnet-4)、Gemini、Copilot
+- 參與者：Player A (claude-sonnet-4)、Claude (Claude Code)、Gemini、Copilot
 - 輪數：3
 - 共識：...
 - 分歧：...
@@ -201,6 +219,7 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
     ├── topic-brief.md              # 議題書
     ├── participants.yaml           # 參與者清單
     ├── round-1-player-a.md         # Round 1 Subagent
+    ├── round-1-claude.md           # Round 1 Claude
     ├── round-1-gemini.md           # Round 1 Gemini
     ├── round-1-copilot.md          # Round 1 Copilot
     ├── round-2-*.md                # Round 2 ...
@@ -270,6 +289,36 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 請完整展開你的論述。
 ```
 
+### Claude prompt
+
+```
+你正在參加一場圓桌會議。
+
+## 議題
+{topic_brief}
+
+## 目前討論紀錄
+{all_previous_statements}
+
+請發表你的觀點。從深度分析和全面性角度切入，回應前面所有人的發言。
+可以同意、反駁、補充或提出新觀點。請完整展開你的論述。
+```
+
+### Gemini prompt
+
+```
+你正在參加一場圓桌會議。
+
+## 議題
+{topic_brief}
+
+## 目前討論紀錄
+{all_previous_statements}
+
+請發表你的觀點。回應前面所有人的發言，可以同意、反駁、補充或提出新觀點。
+請完整展開你的論述。
+```
+
 ### Copilot prompt
 
 ```
@@ -310,5 +359,6 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 - **CLI timeout**：agy 預設 5 分鐘 timeout。如果討論很長，可能需要 `--print-timeout`。
 - **失敗處理**：如果某個參與者失敗（timeout、API error），跳過該參與者繼續下一位。
 - **Subagent 生命週期**：subagent 在整場會議中保持存活，每輪用 resume 傳入新 prompt。
+- **Claude 模型**：Claude CLI 可以用 `--model` 指定模型（如 `claude-sonnet-4-20250514`）。預設用訂閱帳戶的預設模型。
 - **Gemini 模型**：agy 可以用 `--model` 指定模型（如 `gemini-3.6-flash-high`）。預設用 agy 預設。
 - **Copilot 模型**：gh copilot 目前不支援 `--model` 參數。
