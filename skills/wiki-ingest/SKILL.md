@@ -36,9 +36,15 @@ git pull           # 確保拿到最新版
 - 讀那些頁面，了解現有知識
 - 決定是建立新頁面還是更新現有頁面
 
-### 3. 與人類確認重點
+### 3. 雙模型交叉驗證（取代人類確認，Pi 主持不投票）
 
-討論要提取什麼知識點、有沒有特殊要求。
+- Pi（本 agent）不自己提案，分別呼叫 `chat-with-claude` 與 `chat-with-gemini` skill，讓兩個獨立參與者對同一份 raw 各自產出結構化提案
+- **Round 1**：只比對關鍵欄位（目標頁面、type、topics、是否推翻既有結論）；措辭不同不算分歧
+- 一致 → 採用，進入步驟 4
+- 不一致 → **Round 2**：互相展示對方提案，各自覆核是否修改立場
+- Round 2 仍不一致 → 呼叫 `chat-with-copilot` skill 當第三票，多數決；記錄分歧與裁決理由於 `wiki/log.md`
+- 三方仍無共識 → 仍然寫入，標記 frontmatter `confidence: draft`（不可因為沒共識就放棄這筆資料）
+- 輪數上限：2 輪 + 第三票，避免無止盡討論
 
 ### 4. 建立/更新 wiki 頁面
 
@@ -103,13 +109,14 @@ provenance:               # source 類型必填；其他類型可選
 - 優先使用 vault-root 完整路徑，例如 `[[wiki/entities/pi-mono|pi-mono]]`
 - 新 journal 與正文 link 一律優先使用 canonical vault-root path
 - **不篩選**：所有 raw 都會被消化，LLM 不能決定「什麼有價值」
+- **零遺漏保證**：每個 raw 檔案都必須產出至少一個 wiki 頁面，或在既有頁面明確記錄「已檢視、併入 XXX，理由：...」；不可以無痕跡跳過
 - **先查詢再寫入**：避免重複，自動建立交叉引用
 
 ## 職責劃分
 
 ### wiki-ingest 負責
 - 讀取 `raw/` 或 `staging/` → 查重 → 合成與寫入主庫
-- 處理人類確認後的回填草稿
+- 處理共識通過或 TTL 到期晉升的回填草稿
 - 建立/更新 wiki 頁面
 
 ### wiki-query 負責（不在本 skill 範圍）
@@ -119,13 +126,13 @@ provenance:               # source 類型必填；其他類型可選
 
 ## 處理 Staging Buffer
 
-當收到人類確認的回填草稿時：
+當草稿達到 `auto_verified` / `verified_by_arbitration`，或 TTL（21 天）到期時：
 
 1. 讀取 `wiki/staging/` 中的草稿
 2. 驗證 metadata 完整性
-3. 移入 wiki/ 相應目錄（concepts/entities/sources）
-4. 更新 index.md 和 log.md
-5. 刪除 Staging 中的草稿
+3. 移入 wiki/ 相應目錄（concepts/entities/sources）；TTL 到期晉升的草稿保留 frontmatter `confidence: draft`
+4. 重新產生 index.md，更新 log.md
+5. 刪除 Staging 中的草稿（內容已移入正式知識，不會遺失）
 
 ---
 

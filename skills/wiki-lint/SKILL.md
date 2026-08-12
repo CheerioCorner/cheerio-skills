@@ -29,7 +29,10 @@ git pull           # 確保拿到最新版
 #### 知識品質（LLM 判斷）
 - **矛盾偵測** — 掃描相同概念頁面中互相牴觸的述句（例如 A 說 X 是 Y，B 說 X 是 Z）
   - 掃描 `decisions/` 是否有相互抵觸的決策
-  - 標記矛盾，不自動修復，等待人類確認
+  - 先呼叫 `chat-with-gemini` 覆核，嘗試共識收斂；不一致再用 `chat-with-copilot` 仲裁
+  - 仍無法收斂 → 歸入 `wiki/discussions/`，明標兩種觀點並存，記錄於報告供人類選讀（不阻塞、不等人類確認）
+- **遺漏稽核** — 掃描 `raw/` 底下每個檔案是否有 wiki 頁面在 provenance 中引用；未被引用者自動觸發 Ingest，或標記排除原因
+- **Topic 過大** — 某 topic 下頁面數超過門檻時，用 `round-table` skill（claude + gemini + copilot）討論並自動執行分裂方案
 - **過時主張** — 被較新來源推翻卻沒標記為過時的內容
 - **缺漏概念** — 多個頁面反覆提到某個概念/工具/人，但沒有獨立頁面
 - **交叉引用缺漏** — 兩個頁面高度相關卻沒有 `[[wikilink]]` 連結
@@ -47,9 +50,9 @@ git pull           # 確保拿到最新版
   - 標記 `FIDELITY_VIOLATION` 或 `UNGROUNDED_CLAIM`
 
 #### Staging Buffer 健康度
-- **逾時草稿** — `wiki/staging/` 中超過 21 天 TTL 的草稿
-- **重複草稿** — 相似 query 產生的重複回填
-- **孤立草稿** — 長期未被確認的草稿
+- **逾時草稿** — `wiki/staging/` 中超過 21 天 TTL 的草稿 → 自動晉升為正式知識（`confidence: draft`），不是清除
+- **重複草稿** — 相似 query 產生的重複回填 → 合併，累加 `reinforcement` 計數
+- **孤立草稿** — 長期未被印證的草稿 → 隨 TTL 規則自動晉升，不需要人類介入
 
 #### Raw 層健康度（整理流程）
 
@@ -65,14 +68,14 @@ git pull           # 確保拿到最新版
 **執行步驟：**
 1. `grep -h "path: raw/web" wiki/sources/*.md` 取得已引用清單
 2. 比對 `raw/web/*.md`，找出未引用的檔案
-3. 依內容分類，產出建議清單
-4. 人類確認後，執行 `mv` 到 `raw/.trash/` 或觸發 ingest
+3. 依內容分類，產出清單
+4. 已消化+冗餘的檔案自動 `mv` 到 `raw/.trash/`（可逆，git 有歷史紀錄）；未消化+有價值的檔案自動觸發 Ingest；其餘記錄於報告供選讀
 
 ### 2. 提出清單
 
-「該修什麼、該查什麼、該補什麼資料」
+「哪些已經自動處理、哪些需要人類判斷」
 
-### 3. 人類確認後修改
+### 3. 能自動處理的直接執行（矛盾仲裁、topics 分裂、Staging 晉升、index.md 重建、觸發遺漏 raw 的 Ingest）；🔴 清單留給人類選讀，不阻塞
 
 ### 4. 推送回 GitHub
 
@@ -89,29 +92,26 @@ git push
 ```markdown
 # Wiki Lint Report — YYYY-MM-DD
 
-## 🔴 必須修復
+## 🔴 需要人類判斷（極少數，共識仲裁後仍無法收斂）
 - [ ] [問題 1] — [說明]
-- [ ] [問題 2] — [說明]
 
-## 🟡 建議修復
-- [ ] [問題 3] — [說明]
-
-## 🟢 可選改善
-- [ ] [問題 4] — [說明]
+## 🤝 AI 已自動處理（選讀，不需要動作）
+- [x] [矛盾仲裁 / topics 分裂 / Staging 晉升 / 遺漏補齊] — [結果與理由]
 
 ## 📊 統計
 - 總頁面數：N
 - 孤立頁面（無 inbound links）：N
 - 缺 frontmatter：N
 - 缺 provenance：N
-- 矛盾內容：N
+- 矛盾內容（已自動仲裁 / 歸入 discussions）：N
 - 過時主張：N
 - 缺漏概念：N
 - 交叉引用缺漏：N
 - 資料缺口：N
 - 半衰期過期：N
 - Source Fidelity 違規：N
-- Staging Buffer 逾時：N
+- Staging Buffer 晉升：N
+- 遺漏稽核（raw 未被引用）：N
 - Raw 冗餘：N
 - Raw 未消化：N
 ```
