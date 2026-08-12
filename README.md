@@ -30,19 +30,18 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 | notion-wiki-feedback | Notion → Wiki 回流機制 |
 | gemini-notion-workflow | Gemini + Notion 整合工作流 |
 | learning-loop | 自動學習優化系統 |
-| todos | 任務管理 |
-| round-table | 多 AI 圓桌會議 |
+| round-table | 多 AI 圓桌會議（Pi 主持不投票，Claude+Gemini+Copilot 參與） |
 
 ### 📚 Obsidian-dependent（需要 vault 結構）
 
 | Skill | 說明 |
 |-------|------|
 | wiki-knowledge | Obsidian 知識庫 ingest/query/lint |
-| wiki-ingest | 從 raw/ 資料建立或更新 wiki 頁面（含 Staging Buffer） |
-| wiki-lint | 健康檢查（結構+品質+半衰期+矛盾+Source Fidelity） |
+| wiki-ingest | 從 raw/ 資料建立或更新 wiki 頁面（雙模型交叉驗證，Pi 主持不投票；含 Staging Buffer） |
+| wiki-lint | 健康檢查（結構+品質+半衰期+矛盾+Source Fidelity，能自動處理就不等人類） |
 | wiki-query | 查詢 wiki 內容 |
-| wiki-pdf | PDF → Markdown → raw → wiki |
-| wiki-youtube | YouTube → raw → wiki |
+| wiki-ingest-pdf | PDF → Markdown → raw，轉檔後交給 wiki-ingest 處理 |
+| wiki-ingest-youtube | YouTube → raw，抓字幕後交給 wiki-ingest 處理 |
 | work-tracker | 工作狀態管理 |
 | notion-to-raw | Notion → raw 抓取 |
 | plannotator-sync | Plannotator → raw 同步 |
@@ -65,13 +64,12 @@ skills/
 ├── pi-plannotator-auto/SKILL.md
 ├── plannotator-sync/SKILL.md
 ├── round-table/SKILL.md
-├── todos/SKILL.md
 ├── wiki-ingest/SKILL.md
+├── wiki-ingest-pdf/SKILL.md
+├── wiki-ingest-youtube/SKILL.md
 ├── wiki-knowledge/SKILL.md
 ├── wiki-lint/SKILL.md
-├── wiki-pdf/SKILL.md
 ├── wiki-query/SKILL.md
-├── wiki-youtube/SKILL.md
 └── work-tracker/SKILL.md
 ```
 

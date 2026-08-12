@@ -27,7 +27,7 @@ git pull           # 確保拿到最新版
 從 `raw/` 讀取新檔案：
 - **文字檔案**：一次讀完
 - **圖片**：分批讀取
-- **PDF 檔案**：使用 `wiki-pdf` skill（`markitdown` 轉 Markdown + `pymupdf` 提取圖片）
+- **PDF 檔案**：使用 `wiki-ingest-pdf` skill（`markitdown` 轉 Markdown + `pymupdf` 提取圖片）
 
 ### 2. 查詢既有知識（避免重複）
 
@@ -141,5 +141,5 @@ provenance:               # source 類型必填；其他類型可選
 - `wiki-query` — 查詢 wiki 內容
 - `wiki-lint` — 健康檢查
 - `knowledge-garden` — 維護 Notion 知識花園
-- `wiki-pdf` — PDF 處理流程
-- `wiki-youtube` — YouTube 字幕處理流程
+- `wiki-ingest-pdf` — PDF → raw，格式轉換後交給本 skill 處理
+- `wiki-ingest-youtube` — YouTube 字幕/逐字稿 → raw，格式轉換後交給本 skill 處理
