@@ -1,0 +1,197 @@
+# Knowledge Garden Seed Schema
+# SSOT for Notion properties and page content templates
+# Location: ~/.agents/schemas/seed_schema.yaml
+
+version: "1.0"
+
+# ──────────────────────────────────────────────────────────────
+# Notion Database Properties (shared across all seed types)
+# ──────────────────────────────────────────────────────────────
+notion_properties:
+  種子:
+    type: title
+    description: "種子名稱"
+  成長狀態:
+    type: select
+    options:
+      - "🌱 種子期"
+      - "🌿 成長期"
+      - "🌳 成熟期"
+  Tags:
+    type: multi_select
+    options:
+      - "🔬 研究"
+      - "🛠️ 實作"
+      - "📝 筆記"
+      - "💡 靈感"
+      - "📚 學習"
+      - "🎯 研究專題"
+  來源 URL:
+    type: url
+    description: "原始來源"
+  視覺地圖頁面:
+    type: url
+    description: "該種子的視覺地圖連結"
+  給我的啟發？:
+    type: rich_text
+    description: "心得、靈感"
+  研究專題:
+    type: relation
+    description: "所屬研究專題（多對多雙向關聯）"
+  Wiki Path:
+    type: url
+    description: "對應的 wiki 頁面連結"
+  種下日期:
+    type: date
+    description: "首次建立時間"
+  最後更新:
+    type: date
+    description: "最近一次灌溉/更新"
+  Sync Status:
+    type: select
+    options:
+      - "✅ 已同步"
+      - "⏳ 待同步"
+      - "⚠️ 衝突"
+
+# ──────────────────────────────────────────────────────────────
+# Seed Types with content_body templates
+# ──────────────────────────────────────────────────────────────
+seed_types:
+  concept:
+    description: "可跨專案重用的抽象知識"
+    default_tags:
+      - "🔬 研究"
+    content_body:
+      quick_draft:
+        sections:
+          - name: "一句話定義"
+            required: true
+          - name: "核心重點"
+            required: true
+            max_items: 3
+          - name: "相關標籤"
+            required: false
+      enriched:
+        sections:
+          - name: "背景與核心概念"
+            required: true
+            min_paragraphs: 2
+          - name: "運作原理"
+            required: true
+          - name: "優缺點比較"
+            required: false
+            format: table
+          - name: "實務應用場景"
+            required: false
+          - name: "參考文獻"
+            required: false
+            format: list
+
+  tool:
+    description: "人、工具、package、服務與具體實作"
+    default_tags:
+      - "🛠️ 實作"
+    content_body:
+      quick_draft:
+        sections:
+          - name: "這是什麼"
+            required: true
+          - name: "核心功能"
+            required: true
+            max_items: 3
+          - name: "連結"
+            required: true
+      enriched:
+        sections:
+          - name: "這是什麼"
+            required: true
+            min_paragraphs: 2
+          - name: "核心原理"
+            required: true
+          - name: "運作機制"
+            required: true
+            format: ordered_list
+          - name: "關鍵組件"
+            required: true
+            format: table
+          - name: "我的啟發"
+            required: true
+          - name: "成長計畫"
+            required: false
+            format: checklist
+          - name: "連結"
+            required: true
+
+  project:
+    description: "研究專題，綜合多個種子的知識"
+    default_tags:
+      - "🎯 研究專題"
+    content_body:
+      quick_draft:
+        sections:
+          - name: "研究問題"
+            required: true
+          - name: "相關種子"
+            required: true
+            format: list
+      enriched:
+        sections:
+          - name: "研究問題"
+            required: true
+          - name: "研究範圍"
+            required: true
+          - name: "目前已知"
+            required: true
+            min_paragraphs: 2
+          - name: "種子地圖"
+            required: true
+            format: table
+          - name: "研究進展"
+            required: true
+            format: checklist
+          - name: "關鍵洞察"
+            required: true
+          - name: "連結"
+            required: true
+
+# ──────────────────────────────────────────────────────────────
+# Quality Gate (Evaluator-Optimizer Loop)
+# ──────────────────────────────────────────────────────────────
+quality_gate:
+  enabled: true
+  mode: "non_blocking"  # suggestions only, never block generation
+
+  checks:
+    - id: "title_clarity"
+      name: "標題明確"
+      description: "頁面是否有明確的標題和定義"
+      weight: 1
+
+    - id: "table_content"
+      name: "表格有實質內容"
+      description: "表格不是空的，有具體數據或觀點"
+      weight: 1
+
+    - id: "cross_references"
+      name: "交叉引用正確"
+      description: "連結到存在的頁面，格式正確"
+      weight: 1
+
+    - id: "no_duplicates"
+      name: "無重複或矛盾"
+      description: "內容不重複，與既有知識不矛盾"
+      weight: 1
+
+    - id: "source_coverage"
+      name: "來源覆蓋率"
+      description: "有引用來源 URL 或 wiki 頁面"
+      weight: 0.5
+
+  diagnostic_report:
+    format: |
+      > [!NOTE] 💡 **品質診斷**
+      > - 核心概念覆蓋率：{score}/5
+      # - 來源引用：{pass_or_work}
+      > - 建議：{suggestion}
+    show_in: "enriched_only"  # only show in enriched mode

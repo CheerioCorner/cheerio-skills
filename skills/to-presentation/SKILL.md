@@ -1,6 +1,6 @@
 ---
 name: to-presentation
-description: 製作高品質 HTML slide deck。整合 guizang-ppt-skill 設計系統 + huashu-design 渲染引擎。當使用者提到「做簡報」、「to-presentation」、「做 PPT」、「做 slides」、「做 HTML 簡報」、「presentation」、「slide deck」、「分享會簡報」時使用。
+description: 製作高品質 HTML slide deck。整合 guizang-ppt-skill 設計系統 + huashu-design 渲染引擎。當使用者提到「做簡報」、「做 PPT」、「做 slides」、「做 HTML 簡報」、「presentation」、「slide deck」、「分享會簡報」時使用。
 ---
 
 # to-presentation Skill
@@ -9,19 +9,22 @@ description: 製作高品質 HTML slide deck。整合 guizang-ppt-skill 設計�
 
 ## 觸發詞
 
-- 「做簡報」、「to-presentation」、「做 PPT」、「做 slides」
+- 「做簡報」、「做 PPT」、「做 slides」
 - 「做 HTML 簡報」、「HTML slide deck」
 - 「分享會簡報」、「會議簡報」
 - 「帮我做一份 XX 的 presentation」
 - 「to-presentation」
 
-## 前置條件（每次執行前檢查）
+## 前置條件（每次執行前自動檢查）
 
 1. **guizang-ppt-skill** 是否已安裝？（`ls ~/.agents/skills/guizang-ppt-skill/`）
    - 未安裝 → `npx skills add https://github.com/op7418/guizang-ppt-skill --skill guizang-ppt-skill`
 2. **huashu-design** 是否已安裝？（`ls ~/.agents/skills/huashu-design/`）
    - 未安裝 → `npx skills add alchaincyf/huashu-design`
-3. 確認 `deck_stage.js` 和 `deck_index.html` 存在於 huashu-design 的 `assets/` 目錄
+3. **複製本 skill 內的 `assets/deck_stage.js` 和 `assets/index.html` 到專案目錄**（已修正繁體中文，不要用 huashu-design 原版）
+   - 來源：`~/.agents/skills/to-presentation/assets/deck_stage.js`
+   - 來源：`~/.agents/skills/to-presentation/assets/index.html`
+4. **修正 index.html 的 manifest**：預設只有一個 sample，必須手動加入所有 slides
 
 ## 工作流程
 
@@ -99,6 +102,39 @@ description: 製作高品質 HTML slide deck。整合 guizang-ppt-skill 設計�
 5. **內容不溢出**：若內容會超過 slide 高度，必須調整呈現方式（縮字、減少行數、拆頁）
 6. **影響表達時需討論**：若調整會影響內容表達，先與使用者確認
 
+### 佈局陷阱與解法（重要！）
+
+#### ⚠️ 字號放大後的連鎖反應
+放大字號（會議室場景）會導致原本不溢出的內容溢出。**解法：**
+- 同步縮小 padding/margin（如 `3vh` → `2vh`）
+- 減少 flow-card 的內部間距
+- callout 如果不是重點，字號可以比正文小一級
+- 每頁內容元素建議不超過：2 cards + 1 callout，或 3 flow-cards + 1 callout
+
+#### ⚠️ Grid 內的卡片必須等高
+並排卡片如果不等高，視覺會很亂。**必須同時設定：**
+```css
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; align-content:stretch; align-items:stretch; }
+.card { flex:1; }  /* 不能漏 */
+```
+
+#### ⚠️ Flow 圖在 card 內時的間距
+Flow 圖放在 card 內時，flow-box 的 padding 必須比獨立時更小：
+```css
+.flow-card { padding: 1.8vh 2vw; margin-bottom: 1.2vh; }  /* 不是 2.5vh */
+.flow-box { padding: .6vh 1vw; }  /* 不是 .8vh */
+```
+
+#### ⚠️ Table + Callout 共存時的比例
+表格和 callout 同頁時，callout 必須縮小，把空間留給表格：
+```css
+table { font-size: max(16px, 1.15vw); }  /* 表格字號 */
+.callout { font-size: max(16px, 1.15vw); padding: 1.2vh 1.8vw; }  /* callout 縮小 */
+```
+
+#### ⚠️ Workflow 中的字體 URL
+**絕對不要**在 workflow script 中用變數（如 `$FONT_IMPORT`）替代字體 URL。write tool 不會插值，會把變數名原樣寫入 HTML。必須直接寫入完整的 `<link>` 標籤。
+
 ### 每頁模板
 
 ```html
@@ -147,21 +183,23 @@ description: 製作高品質 HTML slide deck。整合 guizang-ppt-skill 設計�
 
 ## 注意事項
 
-### deck_index.html 預設設定（重要！）
+### deck_index.html 設定（重要！）
 
-huashu-design 的 `deck_index.html` 預設會隨機切換網格/畫廊模式，畫廊模式會導致：
-- 卡片太大、點不到
-- 頁面重複顯示（畫廊會平鋪重複）
-- 畫面不斷飄移（畫廊有 drift 動畫）
+本 skill 內附的 `index.html` 已修正繁體中文和網格模式。複製到專案目錄後，只需修正 **Manifest**：
 
-**複製 deck_index.html 後，務必立刻做以下修改：**
+**問題：Manifest 只有 1 頁**
+
+預設 manifest 只有一個 sample，必須手動加入所有頁面：
 
 ```javascript
-// 找到這三行，改成：
-window.GALLERY_CARD_W = 180;       // 卡片基准宽度（縮小以容納14頁）
-window.GALLERY_DRIFT_SECONDS = 80; // 画廊漂移一圈时长
-window.DECK_OVERVIEW = 'grid';     // 強制網格模式，關閉畫廊飄移
+window.DECK_MANIFEST = [
+  { file: "slides/01-cover.html", label: "Cover" },
+  { file: "slides/02-problem.html", label: "Problem" },
+  // ... 加入所有頁面
+];
 ```
+
+**如果 huashu-design 有更新**：從 huashu-design 複製新版後，必須重新執行繁體字修正（用 Python script 批量替換），再複製回本 skill 目錄。
 
 ### 字體與可讀性
 
@@ -175,5 +213,6 @@ window.DECK_OVERVIEW = 'grid';     // 強制網格模式，關閉畫廊飄移
 
 - 字體 + 樣式 + script 都在裡面
 - `deck_stage.js` 路徑用相對路徑 `../deck_stage.js`
+- ⚠️ **不要用變數替代字體 URL**（如 `$FONT_IMPORT`），必須寫入完整的 Google Fonts `<link>` 標籤
 - 不要在 workflow 中使用 `require()` 或 Node.js API
 - 14 頁的批量製作建議用 write 工具逐一建立，不要用 workflow script

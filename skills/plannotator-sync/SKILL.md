@@ -48,7 +48,18 @@ ls C:/Cheerio/Obsidian/plannotator/*.md
 
 ## Frontmatter 範例
 
-**搬運後的格式：**
+**Plannotator 原本可能長這樣：**
+```yaml
+---
+title: "Save Plannotator Plans to Obsidian or Bear"
+description: "Configure Plannotator to save plans..."
+created: 2026-08-02T10:30:00Z
+source: plannotator
+tags: [plannotator, obsidian]
+---
+```
+
+**搬到 raw/conversations/ 後變成：**
 ```yaml
 ---
 title: "Save Plannotator Plans to Obsidian or Bear"

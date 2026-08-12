@@ -160,13 +160,127 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 - `round-N-gemini.md`（Gemini）
 - `round-N-copilot.md`（Copilot）
 
-#### Step 4: 檢查結束條件
+#### Step 4: 主持人結論
+
+每位參與者發言後，Pi 產出本輪摘要，存到 `round-N-summary.md`：
+
+```markdown
+# Round {n} 主持人結論
+
+## 本輪發言摘要
+| 參與者 | 立場 | 核心論點 |
+|--------|------|----------|
+| Player A | 同意/反駁/補充 | ... |
+| Claude | 同意/反駁/補充 | ... |
+| Gemini | 同意/反駁/補充 | ... |
+| Copilot | 同意/反駁/補充 | ... |
+
+## 本輪新論點
+1. ...
+
+## 本輪解決的分歧
+1. ...
+
+## 本輪新增的分歧
+1. ...
+
+## 目前未解決分歧
+1. ...
+
+## 共識進度
+- 已達成共識：...
+- 仍待討論：...
+```
+
+#### Step 5: 更新論點追蹤表
+
+更新 `arguments-tracker.md`，記錄所有參與者的歷史論點：
+
+```markdown
+# 論點追蹤表
+
+## 參與者論點歷史
+
+### Player A (model: xxx)
+| 輪次 | 立場 | 論點 | 回應對象 |
+|------|------|------|----------|
+| R1 | 提出 | ... | - |
+| R2 | 補充 | ... | Claude |
+| R3 | 反駁 | ... | Gemini |
+
+### Claude (Claude Code)
+| 輪次 | 立場 | 論點 | 回應對象 |
+|------|------|------|----------|
+| R1 | 提出 | ... | - |
+| R2 | 同意 | ... | Player A |
+
+### Gemini (agy)
+...
+
+### Copilot (gh copilot)
+...
+
+## 分歧點追蹤
+| 分歧點 | 提出者 | 輪次 | 參與方 | 狀態 |
+|--------|--------|------|--------|------|
+| ... | Player A | R1 | A vs B | 未解決 |
+| ... | Claude | R2 | C 同意 A | 已解決 |
+```
+
+#### Step 6: 檢查結束條件
 
 | 條件 | 判定 |
 |------|------|
 | `currentRound >= maxRounds` | 強制結束 |
-| Pi 判斷無新論點 | 共識結束 |
+| 量化偵測觸發 且 無未解決分歧 | 共識結束 |
 | 人類說「停」 | 介入結束 |
+| 有未解決分歧 | ❌ 不能結束 |
+
+如果沒結束，回到 Step 1。
+
+**量化共識偵測（Consensus Detection）：**
+
+每輪結束後，Pi 執行以下分析：
+
+```
+指標計算（每輪）：
+  newArguments = 本輪新提出的論點數（不重複前輪）
+  coverageRate = 本輪回應前輪論點的比例
+  agreementRate = 「同意/補充」vs「反駁/質疑」的比例
+  openDisputes = 未解決的分歧點數量（有人反駁但無人改變立場）
+  lastRoundDisputes = 上一輪的 openDisputes 數量
+
+共識觸發條件（必須同時滿足）：
+  ✅ 以下任一成立：
+    1. 連續 2 輪 newArguments < 2
+    2. 連續 2 輪 coverageRate > 80% 且 agreementRate > 70%
+    3. 所有參與者都已發言 ≥ 2 次，且最後一輪無新論點
+  ✅ 且：openDisputes = 0（無未解決分歧）
+  ✅ 且：openDisputes 不能連續增加（如果分歧在擴大，不能停）
+
+阻止結束條件（任一成立則強制繼續）：
+  ❌ openDisputes > 0 且 lastRoundDisputes ≥ openDisputes（分歧未收斂）
+  ❌ 有新的重要分歧點出現（本輪新增的分歧 > 解決的分歧）
+```
+
+**Pi 的分析 prompt：**
+
+```
+你是圓桌會議主持人。分析 Round {n} 的所有發言，計算以下指標：
+
+Round {n} 發言：
+{round_statements}
+
+請輸出 JSON：
+{
+  "newArguments": [列出本輪新論點，陣列]
+  "newArgumentsCount": 數量,
+  "coverageRate": 0-100（回應前輪論點的比例）,
+  "agreementRate": 0-100（同意/補充的比例）,
+  "triggerConsensus": true/false,
+  "reason": "解釋為什麼觸發或不觸發"
+}
+```
 
 如果沒結束，回到 Step 1。
 
@@ -178,6 +292,14 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 # 圓桌會議紀要：{topic}
 > 日期 | 參與者（含模型）| 輪數
 
+## 論點追蹤表
+> 完整紀錄見 [arguments-tracker.md](arguments-tracker.md)
+
+### 各輪主持人結論
+- [Round 1 結論](round-1-summary.md)
+- [Round 2 結論](round-2-summary.md)
+- ...
+
 ## 共識
 1. ...
 
@@ -185,7 +307,7 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 1. **[議題]**
    - [參與者 A]：...
    - [參與者 B]：...
-   - 評估：...
+   - 最終狀態：未解決 / 已解決 / 部分共識
 
 ## 未解問題
 1. ...
@@ -194,7 +316,7 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 1. ...
 
 ## 完整討論紀錄
-- Round 1: [Player A](round-1-player-a.md) → [Claude](round-1-claude.md) → [Gemini](round-1-gemini.md) → [Copilot](round-1-copilot.md)
+- Round 1: [Player A](round-1-player-a.md) → [Claude](round-1-claude.md) → [Gemini](round-1-gemini.md) → [Copilot](round-1-copilot.md) → [主持人結論](round-1-summary.md)
 - ...
 ```
 
@@ -218,12 +340,15 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 └── 20260809-143000/
     ├── topic-brief.md              # 議題書
     ├── participants.yaml           # 參與者清單
-    ├── round-1-player-a.md         # Round 1 Subagent
-    ├── round-1-claude.md           # Round 1 Claude
-    ├── round-1-gemini.md           # Round 1 Gemini
-    ├── round-1-copilot.md          # Round 1 Copilot
+    ├── arguments-tracker.md        # 論點追蹤表（全程更新）
+    ├── round-1-player-a.md         # Round 1 Subagent 發言
+    ├── round-1-claude.md           # Round 1 Claude 發言
+    ├── round-1-gemini.md           # Round 1 Gemini 發言
+    ├── round-1-copilot.md          # Round 1 Copilot 發言
+    ├── round-1-summary.md          # Round 1 主持人結論
     ├── round-2-*.md                # Round 2 ...
-    ├── synthesis.md                # 會議紀要
+    ├── round-2-summary.md          # Round 2 主持人結論
+    ├── synthesis.md                # 最終會議紀要
     └── meta.yaml                   # 中繼資料
 ```
 
@@ -304,21 +429,6 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 可以同意、反駁、補充或提出新觀點。請完整展開你的論述。
 ```
 
-### Gemini prompt
-
-```
-你正在參加一場圓桌會議。
-
-## 議題
-{topic_brief}
-
-## 目前討論紀錄
-{all_previous_statements}
-
-請發表你的觀點。回應前面所有人的發言，可以同意、反駁、補充或提出新觀點。
-請完整展開你的論述。
-```
-
 ### Copilot prompt
 
 ```
@@ -351,6 +461,102 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 4. 新觀點催化（如果都在重複，換很少說話的先）
 
 請產出下一輪的參與者順序列表（JSON 陣列）。
+```
+
+### Pi 本輪結論 prompt（Pi → 自己）
+
+```
+你是圓桌會議主持人。Round {n} 所有參與者已發言，請產出本輪結論。
+
+Round {n} 發言：
+{round_statements}
+
+前幾輪論點摘要：
+{previous_arguments_summary}
+
+請輸出 JSON：
+{
+  "roundSummary": {
+    "participants": [
+      {
+        "name": "參與者名稱",
+        "stance": "同意/反駁/補充/提出",
+        "coreArgument": "核心論點（一句話）",
+        "respondsTo": "回應誰（可選）"
+      }
+    ],
+    "newArguments": ["本輪新論點"],
+    "resolvedDisputes": ["本輪解決的分歧"],
+    "newDisputes": ["本輪新增的分歧"],
+    "openDisputes": ["目前未解決的分歧"],
+    "consensusProgress": {
+      "achieved": ["已達成共識"],
+      "pending": ["仍待討論"]
+    }
+  }
+}
+```
+
+根據此 JSON，Pi 產出 `round-N-summary.md`。
+
+### Pi 論點追蹤更新 prompt（Pi → 自己）
+
+```
+你是圓桌會議主持人。根據 Round {n} 的結論，更新論點追蹤表。
+
+目前追蹤表：
+{current_tracker}
+
+Round {n} 結論：
+{round_summary}
+
+請輸出更新後的完整追蹤表 Markdown，包含：
+1. 每位參與者的論點歷史（新增本輪的條目）
+2. 分歧點追蹤（新增/更新/解決）
+```
+
+根據此輸出，Pi 更新 `arguments-tracker.md`。
+
+### Pi 共識偵測 prompt（Pi → 自己）
+
+```
+你是圓桌會議主持人。分析 Round {n} 的所有發言，計算共識指標。
+
+Round {n} 發言：
+{round_statements}
+
+前幾輪論點摘要：
+{previous_arguments_summary}
+
+前一輪分歧狀態：
+{previous_disputes}
+
+請輸出 JSON：
+{
+  "newArguments": [列出本輪新提出的論點],
+  "newArgumentsCount": 數量,
+  "coverageRate": 0-100（本輪回應前輪論點的比例）,
+  "agreementRate": 0-100（同意/補充的比例，反駁/質疑為扣分）,
+  "openDisputes": [列出未解決的分歧點],
+  "openDisputesCount": 數量,
+  "newDisputes": [本輪新增的分歧點],
+  "resolvedDisputes": [本輪解決的分歧點],
+  "triggerConsensus": true/false,
+  "blockEnd": true/false,
+  "reason": "解釋為什麼觸發或不觸發，或為什麼阻止結束"
+}
+
+共識觸發條件（必須同時滿足）：
+✅ 以下任一成立：
+  1. 連續 2 輪 newArgumentsCount < 2
+  2. 連續 2 輪 coverageRate > 80% 且 agreementRate > 70%
+  3. 所有參與者都已發言 ≥ 2 次，且最後一輪無新論點
+✅ 且：openDisputesCount = 0（無未解決分歧）
+✅ 且：openDisputes 沒有連續增加
+
+阻止結束條件（任一成立則 blockEnd: true）：
+❌ openDisputesCount > 0 且分歧未收斂（爭議還在）
+❌ 有新的重要分歧點出現
 ```
 
 ## 注意事項
