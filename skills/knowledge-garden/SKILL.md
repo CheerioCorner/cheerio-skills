@@ -102,6 +102,8 @@ ntn api v1/pages/<page-id> -X PATCH -d '{"icon": {"type": "emoji", "emoji": "�
      }
    }'
    ```
+   ⚠️ **`garden-guard` extension 會自動注入 `Sync Status: ⏳ 待同步`**（如缺漏），不需要手動加。
+
 3. **補上頁面內容** — 用 `ntn pages update` 加入 markdown 內容：
    ```bash
    ntn pages update <page-id> --content '<markdown>'
@@ -113,6 +115,9 @@ ntn api v1/pages/<page-id> -X PATCH -d '{"icon": {"type": "emoji", "emoji": "�
    - **比對分析** — 跟我現有的做法有何異同（表格格式）
    - **成長計畫** — checklist，列出觀察/驗證項目
    - **連結** — 指向原始來源、Obsidian Wiki（如有）
+
+> 🔴 **原子化寫入（硬性規則）**：步驟 2（建立 Database 記錄）和步驟 3（寫入頁面內容）是**同一個不可分割的操作**。兩步都完成之前，該種子不得在 manifest 或日記中標記為「已種下」或「完成」。如果因故只完成了步驟 2（例如 API 失敗、忘記步驟 3），`garden-guard` extension 會確保 Sync Status 為「⏳ 待同步」，下一輪巡檢會自動抓到這個未完成項目。
+
 5. **同步本地 manifest**（詳見 §Manifest 自動同步）
 6. **（可選）同步到 Obsidian** — 如果來源有對應的 wiki 頁面，確保連結正確
 
@@ -265,18 +270,20 @@ Stars: 19,743（我們記錄：19,300）
 **流程：**
 
 1. 列出所有子頁（種子、研究專題、視覺地圖）
-2. 檢查：
+2. **🔴 確定性抽驗（不可只查 Properties）**：對每一頁執行 `ntn pages get <id>` 或 `notionApi_API-retrieve-page-markdown` 讀取實際 body content。**只查詢 Database Properties 視為巡檢未完成，不得回報「已巡檢」。**
+3. 逐頁檢查（基於讀取到的 body content，不是 Properties）：
    - **停滯種子** — 成長計畫長期無進展
    - **可合併種子** — 內容高度重疊的相似種子
    - **過時內容** — 最後更新 > 14 天且來源已有新進展（同 `knowledge-garden-trigger` 判定）
-   - **內容空洞** — Sync Status 標記 `📝 待補強`，或頁面只有標題/空白區塊、沒有具體事實或判斷句
+   - **內容空洞** — 內文 < 50 字、或缺少必填結構區塊（比對分析/我的觀點/已知地圖/主觀判斷）、或只有標題沒有具體事實或判斷句 → 直接標記 `📝 待補強`，不得靠主觀心證放行
    - **累加未整併** — 同一主題在頁面裡被提到多次卻沒有互相參照或取代標記，代表是累加而不是整合寫的（見 `knowledge-garden-page-content` Phase 3）
    - **缺視覺地圖** — 種子已達 🌿 成長期以上，或研究專題有 ≥3 顆種子貢獻，但沒有對應的視覺地圖頁面
    - **研究專題過大** — 種子貢獻矩陣超過 8 顆種子，或內容明顯涵蓋多個不相關子題，建議拆分（見 `knowledge-garden-trigger`）
-3. 提出建議清單，區分：
+   - **Properties/Content 不一致** — 最後更新時間有變但 body content 字數沒變（代表只改了 Properties 沒改內容）→ 標記為高優先異常
+4. 提出建議清單，區分：
    - 🤖 可自動處理：補視覺地圖、標記待補強、提示停滯種子
    - 👤 需要人類確認：合併種子、拆分研究專題、任何會覆寫大段既有內容的整併
-4. 🤖 項目直接執行；👤 項目使用者確認後執行
+5. 🤖 項目直接執行；👤 項目使用者確認後執行
 
 ## 頁面模板
 

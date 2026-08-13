@@ -346,6 +346,17 @@ read({ path: "C:/Cheerio/Obsidian/<wiki-path>" })
 - **不需要預覽確認**：單純的 Properties 更新（Sync Status、成長狀態、GitHub star 數字）、純粹補充式的小更新（例如加一條 checklist 項目）
 - 預覽做法：把整合後的完整 markdown 貼在對話裡，說明「這次改了什麼／取代了什麼」，等人類回覆確認或修改意見後才真正呼叫 `ntn pages update`
 
+> 🔴 **批量操作不是例外**：批量建立/更新時，寫入前必須先於對話框輸出 `[PREVIEW]`（單筆）或 `[BATCH_PREVIEW]`（批量清單，至少列出每筆的名稱 + 核心定義 + 觀點摘要），並取得人類明確回覆確認。**沒有輸出過 Preview 記錄，禁止呼叫 `ntn pages update` 或寫入 Notion。**
+>
+> `[BATCH_PREVIEW]` 格式範例：
+> ```
+> [BATCH_PREVIEW] 批量建立 3 顆種子：
+> 1. Claude Code — Anthropic AI Coding Agent。MCP 原生整合，Agentic Loop 架構。觀點：與 Pi 互補而非替代。
+> 2. GitHub Copilot — AI 程式碼輔助生態系。Extensions SDK 讓第三方接入。觀點：與 Pi skill 系統概念相似。
+> 3. LangGraph — Graph-based Agent Runtime。核心價值在 durability。觀點：Pregel 模型值得學習。
+> 請確認以上內容後我才寫入 Notion。
+> ```
+
 ---
 
 ## 使用範例
