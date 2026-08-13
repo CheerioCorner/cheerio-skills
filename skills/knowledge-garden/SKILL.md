@@ -14,6 +14,11 @@ description: >-
 - 如果遇到 404 錯誤，表示頁面尚未共享，請人類在 Notion 中將頁面連接到 CheerioPi
 - 讀取使用 MCP `notionApi`，寫入使用 `ntn` CLI
 - **CLI 命令語法**：參考 `notion-cli` skill（`~/.agents/skills/notion-cli/SKILL.md`）
+- **garden-guard extension（建議安裝）**：`~/.pi/agent/extensions/garden-guard.ts`
+  - 提供 Notion 寫入操作的確定性 gate（自動注入 Sync Status、驗證頁面有內容、批量操作警告）
+  - 如果未安裝，SKILL.md 的規則仍然有效（靠 Agent 自律），但失去 runtime 強制力
+  - 安裝方式：`pi install git:github.com/CheerioCorner/garden-guard`（repo 建好後），或直接複製 `extensions/garden-guard.ts` 到 `~/.pi/agent/extensions/`
+  - 偵測方式：執行 `ls ~/.pi/agent/extensions/garden-guard.ts`，或在 Pi 啟動後觀察 TUI 底部是否有 `[garden-guard]` 訊息
 
 ## 花園位置
 
