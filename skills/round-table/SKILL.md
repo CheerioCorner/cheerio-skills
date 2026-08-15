@@ -1,11 +1,11 @@
 ---
 name: round-table
-description: 多 AI 圓桌會議。Pi 主持，派出 subagent（使用者指定模型）+ Claude + Gemini + Copilot 共同討論。觸發詞：「圓桌會議」、「round table」、「多方討論」、「一起討論」。
+description: 多 AI 圓桌會議。Pi 主持，派出 subagent（使用者指定模型）+ Claude + Gemini + Copilot + Codex 共同討論。觸發詞：「圓桌會議」、「round table」、「多方討論」、「一起討論」。
 ---
 
 # Round Table — 多 AI 圓桌會議
 
-Pi 擔任主持人（不參與討論），派出 subagent 作為參與者，搭配 Claude、Gemini 和 Copilot 進行序列討論。使用者可指定 subagent 的數量和模型。
+Pi 擔任主持人（不參與討論），派出 subagent 作為參與者，搭配 Claude、Gemini、Copilot 和 Codex 進行序列討論。使用者可指定 subagent 的數量和模型。
 
 ## 架構
 
@@ -15,9 +15,9 @@ Pi (主持人 — 不坐在桌上)
   ├──派出 subagent A ─── model: 使用者指定
   ├──派出 subagent B ─── model: 使用者指定（可選）
   │
-  ┌─────────────────────────────────────────────────────┐
-  │  Sub A  │  Sub B  │  Claude  │  Gemini  │  Copilot  │
-  └─────────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────┐
+  │  Sub A  │  Sub B  │  Claude  │  Gemini  │  Copilot  │  Codex  │
+  └──────────────────────────────────────────────────────┘
          每輪由 Pi 決定誰先說
          Round 1 → Round 2 → ... → Round N
          Pi 摺疊 → 會議紀要
@@ -46,6 +46,7 @@ participants:                     # 可選，預設全部
   - claude                        # 預設開啟
   - gemini                        # 預設開啟
   - copilot                       # 預設開啟
+  - codex                         # 預設開啟
 ```
 
 ## 完整流程
@@ -152,6 +153,18 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 # 讀取結果
 ```
 
+**Codex 參與者：**
+```bash
+# 寫 prompt 到臨時檔案
+echo "${prompt}" > .pi/round-table/${id}/round-${n}-codex-prompt.txt
+
+# 執行 codex
+codex exec "$(cat .pi/round-table/${id}/round-${n}-codex-prompt.txt)" \
+  > .pi/round-table/${id}/round-${n}-codex.log 2>&1
+
+# 讀取結果
+```
+
 #### Step 3: 存檔
 
 每位參與者的發言存到：
@@ -159,6 +172,7 @@ gh copilot -p "$(cat .pi/round-table/${id}/round-${n}-copilot-prompt.txt)" \
 - `round-N-claude.md`（Claude）
 - `round-N-gemini.md`（Gemini）
 - `round-N-copilot.md`（Copilot）
+- `round-N-codex.md`（Codex）
 
 #### Step 4: 主持人結論
 
@@ -444,6 +458,21 @@ Round {n} 發言：
 可以同意、反駁、補充或提出新觀點。請完整展開你的論述。
 ```
 
+### Codex prompt
+
+```
+你正在參加一場圓桌會議。
+
+## 議題
+{topic_brief}
+
+## 目前討論紀錄
+{all_previous_statements}
+
+請發表你的觀點。從 OpenAI 生態系和 GPT 模型能力的角度切入，回應前面所有人的發言。
+可以同意、反駁、補充或提出新觀點。請完整展開你的論述。
+```
+
 ### Pi 排序 prompt（Pi → 自己）
 
 ```
@@ -568,3 +597,4 @@ Round {n} 發言：
 - **Claude 模型**：Claude CLI 可以用 `--model` 指定模型（如 `claude-sonnet-4-20250514`）。預設用訂閱帳戶的預設模型。
 - **Gemini 模型**：agy 可以用 `--model` 指定模型（如 `gemini-3.6-flash-high`）。預設用 agy 預設。
 - **Copilot 模型**：gh copilot 目前不支援 `--model` 參數。
+- **Codex 模型**：Codex CLI 使用 `config.toml` 設定模型，或透過 `--model` 參數指定。預設使用 `gpt-5.6-sol`。
