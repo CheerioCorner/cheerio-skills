@@ -70,8 +70,6 @@ seed_types:
           - name: "核心重點"
             required: true
             max_items: 3
-          - name: "相關標籤"
-            required: false
       enriched:
         sections:
           - name: "背景與核心概念"
