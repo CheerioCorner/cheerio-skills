@@ -48,6 +48,10 @@ git pull           # 確保拿到最新版
 - **Source Fidelity** — 核對 wiki 綜述是否能在原始資料中找到對應出處
   - 使用 NLI 三態判斷：Entailment（忠實）/ Contradiction（矛盾）/ Neutral（外推）
   - 標記 `FIDELITY_VIOLATION` 或 `UNGROUNDED_CLAIM`
+- **陳述級溯源缺漏**（2026-08-18 圓桌會議新增）— 檢查來源本身有結構化定位資訊、但 wiki 正文沒有 inline 標註對應位置的頁面
+  - 掃描 `wiki/sources/` 中 `provenance_raw` 指向 `raw/youtube/*.md` 或其他帶 `[MM:SS]`/頁碼結構的頁面，以及引用它的 entity/concept 頁面
+  - 檢查正文事實性陳述（數字、日期、人名、因果結論）是否有 inline `[MM:SS]` 或頁碼標註（規範見 `AGENTS.md` §4.3 陳述級溯源）
+  - 沒有的話標記「待補強」，列入報告統計，不阻塞（歷史頁面補標是漸進工作，不用一次全補）
 
 #### Staging Buffer 健康度
 - **逾時草稿** — `wiki/staging/` 中超過 21 天 TTL 的草稿 → 自動晉升為正式知識（`confidence: draft`），不是清除
@@ -110,6 +114,7 @@ git push
 - 資料缺口：N
 - 半衰期過期：N
 - Source Fidelity 違規：N
+- 陳述級溯源缺漏（待補強）：N
 - Staging Buffer 晉升：N
 - 遺漏稽核（raw 未被引用）：N
 - Raw 冗餘：N

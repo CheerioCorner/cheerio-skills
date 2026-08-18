@@ -52,6 +52,7 @@ git pull           # 確保拿到最新版
 
 - 建立**來源筆記**（`wiki/sources/YYYY-MM-DD-title.md`）— 1 頁彙整該資料重點
   - **⚠️ 必須在 frontmatter 加入 `provenance` 指向 raw 檔案**
+  - **⚠️ 陳述級溯源（claim-level provenance）**：若交接時被標記「此 raw 有時間戳結構」（或 raw 本身帶 `[MM:SS]`、頁碼等結構化定位資訊），正文中的事實性陳述（數字、日期、人名、因果結論、跨來源推論）必須 inline 標註對應位置，例如「延遲主要來自同步 I/O `[12:03]`」。純敘述性過場句可保留段落層級來源，不用逐句標註。規範見 AGENTS.md §4.3。
 - 更新相關 canonical collection pages（`wiki/concepts/`、`wiki/entities/`、`wiki/sources/`）
   - 加入 `[[wikilink]]` 雙向連結
 - 尚未定案的內容放 `wiki/discussions/`；已確認的全域選擇放 `wiki/decisions/`

@@ -242,6 +242,8 @@ segments: <count>
 
 字幕/逐字稿 → raw 的轉換到此結束。**不要在這裡重複實作 ingest 邏輯**——查詢既有知識、雙模型交叉驗證（Pi 主持、Claude+Gemini 提案、分歧才 Round 2 / Copilot 仲裁）、建立或更新 wiki 頁面（source note 記得帶 `provenance_raw` 指向剛存的 raw transcript）、Topic 導航更新、重建 `wiki/index.md`、寫 `wiki/log.md`、git commit + push，全部呼叫 `wiki-ingest` skill 處理（見 AGENTS.md §3.1）。
 
+**⚠️ 交接時必須明確標記溯源模式**：這份 raw transcript 帶有 `[MM:SS]` 時間戳結構，呼叫 `wiki-ingest` 時要在交接說明中註明「此 raw 有時間戳結構，請啟用陳述級溯源模式（見 AGENTS.md §4.3）」。缺少這個訊號，下游會退化成只做文件級（chunk-level）來源標註，遺失時間戳資訊，也就是使用者對照 YouTube 內建 Gemini 摘要時會發現我們少掉的那一層可回溯性。
+
 兩份實作分開維護一定會漂移——這個 skill 原本就是因為沒同步而卡在舊的「人類確認」邏輯，才被抓出來修。
 
 ## 規範引用
