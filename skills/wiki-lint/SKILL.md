@@ -45,13 +45,30 @@ git pull           # 確保拿到最新版
   - 技術文件：180 天
   - 歷史常識：3650 天
   - 公式：`Score = BaseScore × e^(-λt) + Reinforcement`
-- **Source Fidelity** — 核對 wiki 綜述是否能在原始資料中找到對應出處
-  - 使用 NLI 三態判斷：Entailment（忠實）/ Contradiction（矛盾）/ Neutral（外推）
-  - 標記 `FIDELITY_VIOLATION` 或 `UNGROUNDED_CLAIM`
-- **陳述級溯源缺漏**（2026-08-18 圓桌會議新增）— 檢查來源本身有結構化定位資訊、但 wiki 正文沒有 inline 標註對應位置的頁面
-  - 掃描 `wiki/sources/` 中 `provenance_raw` 指向 `raw/youtube/*.md` 或其他帶 `[MM:SS]`/頁碼結構的頁面，以及引用它的 entity/concept 頁面
-  - 檢查正文事實性陳述（數字、日期、人名、因果結論）是否有 inline `[MM:SS]` 或頁碼標註（規範見 `AGENTS.md` §4.3 陳述級溯源）
-  - 沒有的話標記「待補強」，列入報告統計，不阻塞（歷史頁面補標是漸進工作，不用一次全補）
+- **Source Fidelity** — 核對 wiki 綜述是否能在原始資料中找到對應出處（所有 source note 都適用，不分 raw 類型）
+  - **執行步驟**（每次 lint 至少抽樣 3 篇 source note）：
+    1. 選取 source note：優先選最近 ingest 的、或來源 raw 篇幅較長的
+    2. 讀取該 source note 正文，抽出 5-8 條事實性陳述（數字、因果結論、技術斷言、直接引用）
+    3. 讀取對應的 raw 檔案（從 `provenance_raw` 或 `provenance_url` 取得路徑）
+    4. 逐條比對：在 raw 中搜尋支持證據，判斷 NLI 三態：
+       - **Entailment（忠實）**：raw 中有明確支持，或可合理推導 → 通過
+       - **Contradiction（矛盾）**：raw 中有明確反證 → 標記 `FIDELITY_VIOLATION`
+       - **Neutral（外推）**：raw 中找不到任何相關內容，是 AI 自行推斷 → 標記 `UNGROUNDED_CLAIM`
+    5. 記錄結果於 lint 報告
+  - **YouTube/PDF source note**：可同時利用結構化定位資訊（`[MM:SS]`、`[p.X]`）輔助驗證——在 raw 中搜尋該時間戳/頁碼附近的內容，比對是否與陳述一致
+  - **網頁 source note**：直接在 raw 全文搜尋關鍵字比對（逐句可回查，見 `wiki-ingest` §陳述級溯源）
+  - **抽樣策略**：不需全量掃描。每次 lint 抽 3 篇，輪流覆蓋不同來源類型（YouTube / PDF / Web），數輪後自然全覆蓋
+  - **此檢查由 LLM 直接執行**（讀文比對），不需要外部 NLI 模型 API
+- **陳述級溯源缺漏** — 掃描所有 `provenance_raw` 指向有結構化定位資訊的 raw 類型的 source note，檢查正文是否已 inline 標註
+  - **掃描範圍**：`wiki/sources/` 中 frontmatter 的 `provenance_raw` 匹配以下模式：
+    - `raw/youtube/*.md` → 應有 `[MM:SS]` 時間戳標註
+    - `raw/web/*.md` 且 frontmatter 含 `source_type: pdf` → 應有 `[p.X]` 頁碼標註
+    - 其他帶有結構化定位資訊的 raw 類型（未來擴充）
+  - **判斷依據**：正文中事實性陳述（數字、日期、人名、因果結論、直接引用）是否至少有 50% 帶有對應格式的 inline 標註
+  - **低於 50%** → 標記為 `CLAIM_PROVENANCE_GAP`，建議補做
+  - **高於 50% 但有遺漏** → 記錄於報告，不強制要求補做
+  - **全無標註** → 標記為 `CLAIM_PROVENANCE_MISSING`，優先建議補做
+  - 此檢查不自動執行補做（成本高，需人類決定），只標記並報告
 
 #### Staging Buffer 健康度
 - **逾時草稿** — `wiki/staging/` 中超過 21 天 TTL 的草稿 → 自動晉升為正式知識（`confidence: draft`），不是清除
@@ -114,7 +131,7 @@ git push
 - 資料缺口：N
 - 半衰期過期：N
 - Source Fidelity 違規：N
-- 陳述級溯源缺漏（待補強）：N
+- 陳述級溯源缺漏（CLAIM_PROVENANCE_GAP / MISSING）：N
 - Staging Buffer 晉升：N
 - 遺漏稽核（raw 未被引用）：N
 - Raw 冗餘：N

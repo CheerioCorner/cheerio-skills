@@ -52,7 +52,6 @@ git pull           # 確保拿到最新版
 
 - 建立**來源筆記**（`wiki/sources/YYYY-MM-DD-title.md`）— 1 頁彙整該資料重點
   - **⚠️ 必須在 frontmatter 加入 `provenance` 指向 raw 檔案**
-  - **⚠️ 陳述級溯源（claim-level provenance）**：若交接時被標記「此 raw 有時間戳結構」（或 raw 本身帶 `[MM:SS]`、頁碼等結構化定位資訊），正文中的事實性陳述（數字、日期、人名、因果結論、跨來源推論）必須 inline 標註對應位置，例如「延遲主要來自同步 I/O `[12:03]`」。純敘述性過場句可保留段落層級來源，不用逐句標註。規範見 AGENTS.md §4.3。
 - 更新相關 canonical collection pages（`wiki/concepts/`、`wiki/entities/`、`wiki/sources/`）
   - 加入 `[[wikilink]]` 雙向連結
 - 尚未定案的內容放 `wiki/discussions/`；已確認的全域選擇放 `wiki/decisions/`
@@ -112,6 +111,11 @@ provenance:               # source 類型必填；其他類型可選
 - **不篩選**：所有 raw 都會被消化，LLM 不能決定「什麼有價值」
 - **零遺漏保證**：每個 raw 檔案都必須產出至少一個 wiki 頁面，或在既有頁面明確記錄「已檢視、併入 XXX，理由：...」；不可以無痕跡跳過
 - **先查詢再寫入**：避免重複，自動建立交叉引用
+- **陳述級溯源（§4.3）— 網頁來源的實作方式**：YouTube 和 PDF 有 `[MM:SS]` / `[p.X]` 可標，網頁沒有這種結構化定位資訊。但溯源的目的不是「時間戳」本身，是「避免 AI 瞎掰、每個陳述都能回查原文」。因此網頁來源用 **「逐句可回查」** 取代「時間戳可回查」：
+  1. **直接引用**：必須是能在 raw 網頁裡逐字搜尋到的原文，用引號標示（例如：`「把文件切成 chunks 的瞬間就丟棄了結構資訊」`）
+  2. **歸納性陳述**（數字、因果結論、技術斷言）：措辭要具體到能用關鍵字在 raw 裡比對驗證，不能寫得模糊到查無實據（例如：✅「Chunkless RAG 保留 tree structure，讓 agent 用推理導航」；❌「這種方法比較好」）
+  3. **不要求 inline 標記**（因為網頁沒有結構化定位點可標），但每條陳述必須能在 raw 中被搜尋驗證——這是 `wiki-lint` Source Fidelity 檢查的基礎
+  4. 若網頁本身帶有段落錨點、章節編號等結構化定位資訊（少見），應在 frontmatter 標記 `source_type`，`wiki-lint` 的陳述級溯源檢查會自動偵測
 
 ## 職責劃分
 
