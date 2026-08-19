@@ -29,6 +29,19 @@ git pull           # 確保拿到最新版
 - **圖片**：分批讀取
 - **PDF 檔案**：使用 `wiki-ingest-pdf` skill（`markitdown` 轉 Markdown + `pymupdf` 提取圖片）
 
+**掃描關聯想法：** 讀完來源後，搜尋 `raw/conversations/` 中引用本來源的想法檔：
+
+```bash
+# Windows (Git Bash / PowerShell with grep)
+grep -rl "related_raw:.*<RAW_SLUG>" raw/conversations/*.md 2>/dev/null
+# 若 grep 不可用，用 PowerShell:
+# Get-ChildItem raw/conversations/*.md | Select-String -Pattern "related_raw:.*<RAW_SLUG>" -List | Select-Object -ExpandProperty Path
+```
+
+若找到**一個或多個**想法檔，逐一讀取所有想法檔內容，記錄每筆想法的摘要與 raw 路徑，後續 Step 4 建立 source note 時一併處理（迭代所有關聯想法，聚合列出）。
+
+> `wiki-ingest-youtube` 的 Step 1f 已先行掃描，此處再次確認以確保不遺漏（來源可能在 YouTube ingest 後才被加入想法）。
+
 ### 2. 查詢既有知識（避免重複）
 
 在建立新頁面之前，先查詢 wiki 是否已有相關內容：
@@ -52,6 +65,12 @@ git pull           # 確保拿到最新版
 
 - 建立**來源筆記**（`wiki/sources/YYYY-MM-DD-title.md`）— 1 頁彙整該資料重點
   - **⚠️ 必須在 frontmatter 加入 `provenance` 指向 raw 檔案**
+  - **若 Step 1 找到關聯想法檔（可能有多筆）**：在 source note 新增 `## Cheer 的想法` 小節，**逐筆迭代**所有關聯想法檔，每筆列出：
+    - 想法摘要（保留原始措辭，不整理）
+    - `[[raw/conversations/thought-slug|想法標題]]` 連結回 raw 想法檔
+    - 跨 `[[raw/youtube/source-slug|來源標題]]` 或 `[[raw/web/source-slug|來源標題]]` 雙向連結
+  - **若想法夠獨立（新概念／新問題）**：另建 `wiki/concepts/` 或 `wiki/discussions/` 頁面，正文包含 `[[wiki/sources/...]]` 連結回 source note，source note 的「Cheer 的想法」小節也連結到該 wiki 頁面
+  - **若無關聯想法**：不新增「Cheer 的想法」小節，source note 結構不受影響
 - 更新相關 canonical collection pages（`wiki/concepts/`、`wiki/entities/`、`wiki/sources/`）
   - 加入 `[[wikilink]]` 雙向連結
 - 尚未定案的內容放 `wiki/discussions/`；已確認的全域選擇放 `wiki/decisions/`

@@ -199,3 +199,4 @@ PDF 原始檔案帶有結構化定位資訊（頁碼），根據 AGENTS.md §4.3
 - markitdown 輸出可能有頁碼標記（如 `1 / 8`），**保留這些標記**——它們是陳述級溯源的定位依據，不應移除
 - 圖片引用使用相對路徑 `../assets/<slug>/`
 - **PDF 頁碼是結構化定位資訊**：AGENTS.md §4.3 明確列出「PDF 頁碼」與 YouTube 時間戳同級，source note 必須做陳述級溯源
+- **想法關聯共用規範**：若 Cheer 對某篇 PDF 有當下想法，想法檔存入 `raw/conversations/`（`source_kind: thought`），`related_raw:` 指向 `raw/web/xxx.md`（PDF raw 檔）。後續 wiki-ingest 處理該 PDF 時會自動偵測並在 source note 加入「Cheer 的想法」小節（見 AGENTS.md §4.2 想法檔雙向關聯規範）

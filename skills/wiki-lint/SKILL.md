@@ -70,6 +70,27 @@ git pull           # 確保拿到最新版
   - **全無標註** → 標記為 `CLAIM_PROVENANCE_MISSING`，優先建議補做
   - 此檢查不自動執行補做（成本高，需人類決定），只標記並報告
 
+#### 雙向關聯健檢（raw/conversations ↔ raw/youtube・raw/web）
+
+> **Windows 相容性說明**：以下掃描使用 `grep`（Git Bash / WSL 皆可用）。若在纯 PowerShell 環境執行，改用 `Get-ChildItem | Select-String -Pattern ... -List`。路徑比對前統一用 `/` 分隔符（raw 路徑本身已規範為 `/`）。
+
+- **想法檔正向檢查** — 掃描 `raw/conversations/` 中所有 `source_kind: thought` 的檔案：
+  1. 讀取 frontmatter `related_raw:` 欄位
+  2. 驗證指向的 source 檔案是否存在（`raw/youtube/`、`raw/web/` 或其他 raw channel）
+  3. 驗證正文是否包含 `[[wikilink]]` 指向同一來源
+  4. 缺失 → 標記 `THOUGHT_LINK_BROKEN`
+- **想法檔 frontmatter 完整性** — 掃描 `raw/conversations/` 中所有 `source_kind: thought` 的檔案：
+  1. 若正文包含 `[[raw/...]]` wikilink，但 frontmatter 缺少 `related_raw:` 宣告
+  2. → 標記 `THOUGHT_FRONTMATTER_MISSING`
+- **來源反向檢查** — 對每個 `raw/youtube/` 和 `raw/web/` 檔案：
+  1. `grep -rl "related_raw:.*<FILENAME>" raw/conversations/*.md` 掃描是否有想法檔引用
+  2. 若有想法檔引用，檢查對應的 `wiki/sources/` 筆記是否包含「Cheer 的想法」小節
+  3. 缺失 → 標記 `THOUGHT_SECTION_MISSING`
+- **Wiki 層雙向連結** — 對每個被引用的想法檔：
+  1. 檢查是否有對應的 wiki 頁面（`wiki/sources/` 的「Cheer 的想法」小節或獨立 `wiki/concepts/`/`wiki/discussions/` 頁面）
+  2. 該 wiki 頁面是否 `[[wikilink]]` 回 raw 想法檔
+  3. 缺失 → 標記 `WIKI_THOUGHT_LINK_MISSING`
+
 #### Staging Buffer 健康度
 - **逾時草稿** — `wiki/staging/` 中超過 21 天 TTL 的草稿 → 自動晉升為正式知識（`confidence: draft`），不是清除
 - **重複草稿** — 相似 query 產生的重複回填 → 合併，累加 `reinforcement` 計數
@@ -132,6 +153,7 @@ git push
 - 半衰期過期：N
 - Source Fidelity 違規：N
 - 陳述級溯源缺漏（CLAIM_PROVENANCE_GAP / MISSING）：N
+- 雙向關聯（THOUGHT_LINK_BROKEN / THOUGHT_FRONTMATTER_MISSING / THOUGHT_SECTION_MISSING / WIKI_THOUGHT_LINK_MISSING）：N
 - Staging Buffer 晉升：N
 - 遺漏稽核（raw 未被引用）：N
 - Raw 冗餘：N

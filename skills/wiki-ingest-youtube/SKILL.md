@@ -268,6 +268,19 @@ timestamp_format: "[MM:SS]"
 
 兩份實作分開維護一定會漂移——這個 skill 原本就是因為沒同步而卡在舊的「人類確認」邏輯，才被抓出來修。
 
+### Step 1f. 偵測關聯想法
+
+在交給 wiki-ingest 之前，掃描 `raw/conversations/` 是否已有想法檔引用本 YouTube raw：
+
+```bash
+# Windows (Git Bash / PowerShell with grep)
+grep -l "related_raw:.*<VIDEO_SLUG>" raw/conversations/*.md 2>/dev/null
+# 若 grep 不可用，用 PowerShell:
+# Get-ChildItem raw/conversations/*.md | Select-String -Pattern "related_raw:.*<VIDEO_SLUG>" -List | Select-Object -ExpandProperty Path
+```
+
+若找到關聯想法檔，將其路徑清單傳給 `wiki-ingest`（Step 1 讀取來源時會一併處理）。若沒有，正常流程不受影響。
+
 ### 陳述級溯源規則（source note 生成時）
 
 YouTube raw transcript 帶有結構化定位資訊（`[MM:SS]` 時間戳），根據 AGENTS.md §4.3，wiki source note 正文**必須**做陳述級溯源。這不是可選的——在 wiki-ingest 產出 source note 時就必須完成，不能留到事後補。
