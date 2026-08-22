@@ -49,6 +49,7 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 | wiki-lint | 健康檢查（結構+品質+半衰期+矛盾+Source Fidelity+遺漏稽核，能自動處理就不等人類） |
 | wiki-query | 查詢 wiki 內容，高價值洞察全自動回填 |
 | work-tracker | 管理 `work/` 可追溯工作狀態 |
+| cheerio-roadmap | 地鐵路線圖風格 Artifact 呈現工作進度，問進度/更新 work 時自動重繪同一個連結 |
 | learning-loop | 任務完成後自動提取學到的東西、分析工作模式、追蹤 skill 效果 |
 
 ### 🛠️ 工程輔助
@@ -90,9 +91,11 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 ```
 skills/
 ├── chat-with-claude/SKILL.md
+├── chat-with-codex/SKILL.md
 ├── chat-with-copilot/SKILL.md
 ├── chat-with-gemini/SKILL.md
 ├── chat-with-gemini-research/SKILL.md
+├── cheerio-roadmap/
 ├── code-review/
 ├── find-skills/SKILL.md
 ├── gemini-notion-workflow/SKILL.md

@@ -14,7 +14,10 @@ description: 管理 Obsidian 的可追溯工作狀態。當使用者提到工作
 1. 讀取 `work/current.md`。
 2. 整理 In progress、Backlog、Blocked 與下一步。
 3. 告訴人類目前有哪些工作。
-4. 詢問：「今天要從哪個開始？」
+4. 若目前 harness 具備 Artifact／可發布網頁能力（目前僅 Claude Code），依 `cheerio-roadmap` skill 重繪並更新路線圖 Artifact；不具備此能力的 harness（Pi／Gemini／Codex／Copilot）改貼 `cheerio-roadmap/state.json` 裡存的 `artifact_url` 連結，不要自己另外產生視覺化檔案。
+5. 詢問：「今天要從哪個開始？」
+
+同樣的重繪規則也適用於「非啟動時」的場合：只要回答了工作進度／現況／目前任務的問題，或剛更新完 `work/current.md`，都比照步驟 4 處理一次，不用等使用者額外要求看路線圖。
 
 啟動時不主動讀取 `work/history/`。只有人類詢問過去做過什麼、上次進度、既有決策或需要追溯時，才讀取相關月份的 history。
 
