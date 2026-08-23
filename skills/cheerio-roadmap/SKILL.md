@@ -55,6 +55,7 @@ description: 用地鐵路線圖風格的 HTML Artifact 呈現目前工作進度�
 - 浮動卡片有「Read more →」導到下方對應的完整任務卡片並閃爍高亮
 - 圖表原生寬度固定（目前 1360px），外層用捲動而非壓縮字體；另外提供 ＋/－/重置縮放工具列
 - 箭頭 marker 用 `markerUnits="userSpaceOnUse"` 固定小尺寸，每條軌道各自一份顏色對應的 marker，不要共用單一黑色/currentColor marker（曾經因為跟著 stroke-width 縮放而爆大）
+- 頁面右下角固定一顆「⬆ 回到路線圖」按鈕（`.back-to-top`），任何捲動位置都常駐，點擊平滑捲回 `.map-card`（SVG 診斷圖本身，不是頁面最頂端）。手機寬度（≤640px）縮成純圖示。2026-08-23 Cheer 要求新增，往後重繪不用重新設計，照 template 抄
 
 ## 檔案
 
@@ -67,3 +68,7 @@ description: 用地鐵路線圖風格的 HTML Artifact 呈現目前工作進度�
 本機（這台）是 source of truth。改了 `SKILL.md` 或 `references/template.html`（通用範本）之後，要手動同步進 `C:/Cheerio/CheerioCorner/cheerio-skills/skills/cheerio-roadmap/` 並 commit + push，才能在公司電腦等其他機器上用 `npx skills add CheerioCorner/cheerio-skills@cheerio-roadmap -g -a pi` 拉到最新版。push 前跟 Cheer 確認一次。**`Obsidian/work/roadmap/cheerio-roadmap.html` 一律不同步**——它在 vault 裡，本來就不會被這個同步流程碰到，這正是把它移出 skill 資料夾的原因。
 
 `state.json` 裡的 `artifact_url` 是 claude.ai 帳號層級的頁面，不需要跨機器同步——任何裝置登入同一個帳號都看得到當時最新的內容，只是「重繪」這個動作本身仍然只能在有 Obsidian vault + Artifact 工具的機器上做（因為要讀 `work/current.md`）。
+
+## 回饋機制（2026-08-23 新增）
+
+Artifact 原生支援留言，不用額外開發：Cheer 在頁面上進入留言模式、選取某個站點/卡片留言講想法，並在留言裡 @claude（或用留言串自己的「啟用 Claude」控制項）啟用該串，Claude 就能看到並回覆。若當下 session 對這個 Artifact 的即時訂閱是連線狀態會直接被通知；換了新 session，Cheer 需要主動提「去看路線圖留言」，Claude 才會用 Artifact 工具的 `action: "comments"` 去讀。未啟用的留言 Claude 看不到也不會被通知，這是刻意設計，避免任意訪客留言打擾。

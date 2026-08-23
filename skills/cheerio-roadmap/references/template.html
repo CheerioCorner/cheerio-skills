@@ -301,6 +301,34 @@
   .glyph.done { background: var(--muted); opacity: .5; }
   .glyph.decision { background: var(--surface); border: 2px dashed var(--accent-today); border-radius: 3px; transform: rotate(45deg); }
 
+  /* ---- back-to-top floating button ---- */
+  .back-to-top {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px 10px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: var(--shadow);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .back-to-top:hover { border-color: var(--line-assistant); color: var(--line-assistant); }
+  .back-to-top .arrow { font-size: 15px; }
+  @media (max-width: 640px) {
+    .back-to-top { right: 16px; bottom: 16px; padding: 10px 12px; font-size: 0; gap: 0; }
+    .back-to-top .arrow { font-size: 16px; }
+  }
+
   /* ---- track sections ---- */
   .track {
     display: flex;
@@ -422,6 +450,10 @@
   </footer>
 
 </div>
+
+<button type="button" id="back-to-top" class="back-to-top" aria-label="回到路線圖頂端">
+  <span class="arrow">⬆</span><span class="txt">回到路線圖</span>
+</button>
 
 <script>
 (function () {
@@ -926,6 +958,13 @@
       else if (action === "out") setScale(scale - 0.2);
       else setScale(1);
     });
+  });
+
+  /* ---- back-to-top button ---- */
+  var backToTop = document.getElementById("back-to-top");
+  var mapCard = document.querySelector(".map-card");
+  backToTop.addEventListener("click", function () {
+    (mapCard || document.body).scrollIntoView({ behavior: "smooth", block: "start" });
   });
 })();
 </script>
