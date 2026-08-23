@@ -39,6 +39,13 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 | gemini-notion-workflow | Gemini 存取 Notion API/CLI 的工具參考；實際呼叫透過 chat-with-gemini |
 | notion-cli | Notion CLI（`ntn`）命令參考 |
 
+### 🔬 深度研究
+
+| Skill | 說明 |
+|-------|------|
+| deep-research-intake | 多輪提問收斂研究意圖與範圍，產出 spec.json |
+| deep-research-execute | 讀 spec.json，跑健檢/輪詢/篩選/人類確認/匯入，產出人類可讀的 sources-report.md，可從 checkpoint 接續 |
+
 ### 📚 Obsidian Wiki（大腦）
 
 | Skill | 說明 |
@@ -97,6 +104,8 @@ skills/
 ├── chat-with-gemini-research/SKILL.md
 ├── cheerio-roadmap/
 ├── code-review/
+├── deep-research-execute/
+├── deep-research-intake/SKILL.md
 ├── find-skills/SKILL.md
 ├── gemini-notion-workflow/SKILL.md
 ├── grill-me/SKILL.md
