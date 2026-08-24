@@ -3,25 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const RATING_LABELS = {
-  must_include: '⭐⭐⭐ Must Include',
-  should_include: '⭐⭐ Should Include',
-  reference: '⭐ Reference',
-  excluded: '✗ Excluded'
-};
-const RATING_ORDER = ['must_include', 'should_include', 'reference', 'excluded'];
-
 function readJson(filePath) {
   if (!fs.existsSync(filePath)) return null;
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-}
-
-function formatCandidateLine(candidate, importStatusByIndex) {
-  const importStatus = importStatusByIndex ? importStatusByIndex[candidate.index] : null;
-  const statusTag = importStatus ? ` (${importStatus})` : '';
-  const reasons = (candidate.filter_reasons || []).join(', ');
-  const reasonTag = reasons ? ` — ${reasons}` : '';
-  return `- [${candidate.title || '(無標題)'}](${candidate.url})${statusTag}${reasonTag}`;
 }
 
 function main() {
@@ -38,72 +22,77 @@ function main() {
   }
 
   const jobDir = path.join(jobsDir, jobId);
-  const specPath = path.join(jobDir, 'spec.json');
-  const candidatesPath = path.join(jobDir, 'source-candidates.json');
-  const manifestPath = path.join(jobDir, 'import-manifest.json');
-  const reportPath = path.join(jobDir, 'sources-report.md');
+  const spec = readJson(path.join(jobDir, 'spec.json')) || {};
+  const checkpoint = readJson(path.join(jobDir, 'checkpoint.json')) || {};
+  const filterReport = readJson(path.join(jobDir, 'quality-filter-report.json'));
+  const renameManifest = readJson(path.join(jobDir, 'rename-manifest.json'));
+  const recheckLog = readJson(path.join(jobDir, 'recheck-log.json')) || [];
+  const answers = readJson(path.join(jobDir, 'answers.json'));
+  const finalSources = readJson(path.join(jobDir, 'sources-final.json')) || [];
 
-  if (!fs.existsSync(candidatesPath)) {
-    console.error(`source-candidates.json not found in ${jobDir}`);
+  if (!answers) {
+    console.error(`answers.json not found in ${jobDir} — run query_answers.js first.`);
     process.exit(1);
   }
 
-  const spec = readJson(specPath) || {};
-  const candidates = readJson(candidatesPath) || [];
-  const manifest = readJson(manifestPath);
-
-  // Build index -> import status map if a manifest exists (post-import run)
-  let importStatusByIndex = null;
-  if (manifest && Array.isArray(manifest.items)) {
-    importStatusByIndex = {};
-    for (const item of manifest.items) {
-      importStatusByIndex[item.index] = item.status;
-    }
-  }
-
-  const grouped = { must_include: [], should_include: [], reference: [], excluded: [] };
-  for (const c of candidates) {
-    (grouped[c.rating] || grouped.reference).push(c);
-  }
-
   const lines = [];
-  lines.push(`# Deep Research 來源報告 — ${jobId}`);
+  lines.push(`# Deep Research 報告 — ${jobId}`);
   lines.push('');
   lines.push(`- 研究主題：${spec.query || '(未知)'}`);
+  lines.push(`- Notebook：${checkpoint.notebook_id ? `https://notebooklm.google.com/notebook/${checkpoint.notebook_id}` : '(未知)'}`);
   lines.push(`- 產生時間：${new Date().toISOString()}`);
-  lines.push(`- 候選來源總數：${candidates.length}`);
-  if (manifest) {
-    lines.push(`- 匯入狀態：已匯入 ${manifest.summary.imported} / 重複跳過 ${manifest.summary.skipped_duplicate} / 失敗 ${manifest.summary.failed}（共 ${manifest.summary.total} 筆核准）`);
-  } else {
-    lines.push('- 匯入狀態：尚未匯入（等待人類確認來源）');
+  if (filterReport) {
+    lines.push(`- 品質過濾：${filterReport.before_count} → ${filterReport.after_count} 筆（移除 ${filterReport.removed.length} 筆）`);
+  }
+  if (recheckLog.length > 0) {
+    lines.push(`- Recheck：共 ${recheckLog.length} 輪補充研究${checkpoint.recheck_outcome === 'exhausted' ? '（已達 3 輪上限，涵蓋範圍可能仍不完整）' : ''}`);
+  }
+  if (renameManifest) {
+    const renamed = renameManifest.filter(m => m.status === 'renamed').length;
+    lines.push(`- 來源分類/重新命名：${renamed} / ${renameManifest.length} 筆成功`);
   }
   lines.push('');
 
-  for (const rating of RATING_ORDER) {
-    const items = grouped[rating];
-    lines.push(`## ${RATING_LABELS[rating]}（${items.length} 筆）`);
+  lines.push('## 研究結果');
+  lines.push('');
+  for (const [i, a] of answers.entries()) {
+    lines.push(`### ${i + 1}. ${a.question}`);
     lines.push('');
-    if (items.length === 0) {
-      lines.push('（無）');
-    } else {
-      for (const c of items) {
-        lines.push(formatCandidateLine(c, importStatusByIndex));
+    lines.push(a.answer || '(無回應)');
+    lines.push('');
+    if (a.citations && a.citations.length > 0) {
+      lines.push('**引用來源：**');
+      for (const c of a.citations) {
+        const label = c.title || c.name || c.url;
+        lines.push(c.url ? `- [${label}](${c.url})` : `- ${label}`);
       }
+      lines.push('');
+    }
+  }
+
+  if (filterReport && filterReport.removed.length > 0) {
+    lines.push('## 已移除的來源（品質過濾）');
+    lines.push('');
+    for (const r of filterReport.removed) {
+      lines.push(`- ${r.title} — ${r.reason}`);
     }
     lines.push('');
   }
 
-  if (manifest && manifest.summary.failed > 0) {
-    lines.push('## 匯入失敗（下次執行 import_sources.js 會自動重試）');
+  if (finalSources.length > 0) {
+    // nlm query notebook doesn't reliably map individual claims back to a
+    // specific source (see query_answers.js) — this is the full curated
+    // source list backing all answers above, not a per-claim citation index.
+    lines.push('## 參考來源清單');
     lines.push('');
-    for (const item of manifest.items) {
-      if (item.status === 'failed') {
-        lines.push(`- [${item.title}](${item.url}) — ${item.error || '未知錯誤'}`);
-      }
+    for (const s of finalSources) {
+      const label = s.title || '(無標題)';
+      lines.push(s.url ? `- [${label}](${s.url})` : `- ${label}`);
     }
     lines.push('');
   }
 
+  const reportPath = path.join(jobDir, 'research-report.md');
   fs.writeFileSync(reportPath, lines.join('\n'));
   console.log(`Report written to ${reportPath}`);
 }

@@ -1,11 +1,13 @@
 ---
 name: deep-research-execute
-description: 執行已完成規劃的 NotebookLM/Gemini Notebook 深度研究任務。當使用者說「執行研究」「開始跑研究」「匯入研究來源」「開始搜尋研究」「執行 deep research」時觸發，負責健檢 nlm CLI、執行分段輪詢研究、篩選候選來源，並引導人類確認後，安全且 idempotent 地匯入來源至 NotebookLM。
+description: 執行已完成規劃的 NotebookLM/Gemini Notebook 深度研究任務。當使用者說「執行研究」「開始跑研究」「匯入研究來源」「開始搜尋研究」「執行 deep research」時觸發，負責健檢/自主升級 nlm CLI、跑研究並自動匯入、讓 Gemini Notebook 自己做品質過濾與補研究、分類重新命名來源、逐題查詢並產出最終報告。
 ---
 
 # Deep Research Execute
 
-深度研究流程的**執行段**：讀 `deep-research-intake` 產出的 `spec.json`，跑健檢 → 研究 → 篩選 → 人類確認 → 匯入，全程用檔案（不是資料庫）保存進度，中斷後可從 checkpoint 接續。
+深度研究流程的**執行段**：讀 `deep-research-intake` 產出的 `spec.json`，跑健檢 → 最終確認 → 研究（自動匯入）→ 品質過濾 → recheck 補研究 → 重新命名 → 逐題查詢 → 產出報告 → 交棒 ingest。全程用檔案（不是資料庫）保存進度，中斷後可從 checkpoint 接續。
+
+判斷品質、判斷資訊是否足夠、判斷分類命名，這些都交給 Gemini Notebook 自己讀來源內容判斷（透過 `nlm query notebook`），不是本地關鍵字比對——腳本只負責把問題問清楚、把回應解析成結構化資料、把 nlm CLI 指令下對，不負責替 Gemini 做判斷。
 
 ## 何時改用其他 skill
 
@@ -14,32 +16,37 @@ description: 執行已完成規劃的 NotebookLM/Gemini Notebook 深度研究任
 ## 執行腳本
 
 - `check_provider.js` — nlm CLI 健檢（版本、認證、可用 profile、notebook 數量）
-- `run_research.js` — 啟動並分段輪詢研究任務（110s 首輪、5 分鐘間隔、900s 上限，累計耗時含所有 CLI 呼叫），完成後寫出 `source-candidates.json`
-- `filter_sources.js` — 對候選來源正規化 URL、去重、評分（must_include/should_include/reference/excluded），依 `budget.max_sources` 做數量控管，產出預設的 `source-decisions.json`
-- `generate_report.js` — 把候選來源／匯入結果整理成人類看得懂的 `sources-report.md`，篩選後與匯入後都要重跑一次
-- `import_sources.js` — 依人類核准的清單，idempotent 逐筆匯入到 notebook，單筆失敗不影響其他筆，checkpoint 只在真正成功時推進
+- `run_research.js` — 啟動研究並用 `--wait-and-import` 讓 nlm 自己等到完成、自動匯入來源，成功後 checkpoint 進到 `sources_ready`
+- `quality_filter.js` — 查詢 notebook 讓 Gemini 揪出廣告/宣傳、膚淺心得文、過期資訊等應移除的來源並實際刪除，產出 `quality-filter-report.json`
+- `recheck_sources.js` — 查詢 notebook 讓 Gemini 判斷剩下的來源是否足以回答原始主題；不夠就對同一個 notebook 補跑一次範圍更窄的研究，最多 3 輪
+- `rename_sources.js` — 查詢 notebook 讓 Gemini 對每個來源分類並建議新標題，逐筆執行 `nlm source rename`
+- `query_answers.js` — 逐一查詢 `spec.json` 裡的 `sub_questions`（沒有就用 `query` 本身），取得答案；`nlm query notebook` 不會可靠回傳逐句引用對應，因此額外快照當下完整（已重新命名的）來源清單存成 `sources-final.json`，報告裡以「參考來源清單」附錄呈現，不是逐句加註
+- `generate_report.js` — 把上述所有階段的結果組成人類可讀的 `research-report.md`
 
-四支都是純 JavaScript，跑法一律：`node "<本 skill 資料夾>\scripts\<script>.js" <job-id>`。
+七支都是純 JavaScript，跑法一律：`node "<本 skill 資料夾>\scripts\<script>.js" <job-id>`。共用邏輯（定位 nlm、讀 job、解析 Gemini 回應的 JSON）在 `scripts/lib/nlm_common.js`。
 
-## 流程（必經七步，不得省略）
+## 流程（必經十步，不得省略）
 
 1. **確認環境變數**：`RESEARCH_JOBS_DIR` 沒設定就先請使用者設好，不要猜路徑。
-2. **健檢**：跑 `check_provider.js`。`ready` 不是 `true`（版本不合、未認證）就先請使用者 `nlm login`，不要往下跑。
+2. **健檢**：跑 `check_provider.js`。`cli_version_ok` 是 `false` 就依 `references/nlm-upgrade-guide.md` 自己升級並驗證，不要等使用者手動處理——只有升級本身卡住（例如檔案被占用的 WinError）才需要請人類協助。`authenticated` 是 `false` 才需要請使用者 `nlm login`。
 3. **讀規格**：讀 `<RESEARCH_JOBS_DIR>/<job-id>/spec.json`。
-4. **研究與輪詢**：跑 `run_research.js <job-id>`。過程中把目前累計等待時間回報給使用者；逾時或重試耗盡會直接以非零碼結束，如實轉告使用者。
-5. **篩選並產出報告**：跑 `filter_sources.js <job-id>`，接著跑 `generate_report.js <job-id>` 產出 `sources-report.md`——**這是給人類看的固定資產，篩選完一定要重新產生一次**，不要自己在對話裡手打候選清單。
-6. **人類確認關卡**：把 `sources-report.md` 的內容（或其連結）呈現給使用者，問：
-   > ✏️ 已篩選出候選來源，預設將匯入 `must_include`／`should_include` 的來源。
-   > - 輸入 **Y**：同意，匯入預設名單
-   > - 輸入 **指定序號**（如 `1, 3, 5`）：只匯入這些
-   > - 輸入 **N**：取消本次匯入
+4. **最終確認**：把 `query`、`depth`、預估耗時（`fast`≈30秒、`deep`≈5分鐘）、`max_sources`、`profile` 整理成人類看得懂的摘要，問：
+   > ✏️ 即將開始深度研究：**{query}**（{depth} 模式，profile: {profile}）。確認開始嗎？（Y/N）
 
-   若使用者指定序號，先更新 `source-decisions.json` 再往下一步。**停在這裡等回覆，不要自己代為決定。**
-7. **匯入並更新報告**：跑 `import_sources.js <job-id>`，跑完再跑一次 `generate_report.js <job-id>`——這次會把實際匯入結果（成功/重複跳過/失敗）併進 `sources-report.md`，成為這個 job 最終的、人類可以直接打開看的紀錄。有失敗項目時如實告知使用者「下次執行 `import_sources.js` 會自動重試」，不要自己反覆重跑。
+   **N** 就中止，不呼叫任何 nlm 指令、不建立 notebook。這一步每次執行都要問，包括續跑中斷的 job，不是只在第一次問。
+5. **研究**：跑 `run_research.js <job-id>`。這一步會阻塞到研究完成並自動匯入來源（`deep` 模式約 5-6 分鐘），過程中如實告知使用者正在等待，不要自己猜測進度。非零碼結束時如實轉告錯誤內容，不要自己重跑。
+6. **品質過濾**：跑 `quality_filter.js <job-id>`。若因為 Gemini 回應格式不符而失敗（非零碼），把 `quality-filter-raw.md` 的內容摘要給使用者看，人工判斷要不要手動移除，不要自己瞎猜著重跑或忽略。
+7. **Recheck**：跑 `recheck_sources.js <job-id>`。若輸出提示「回到 sources_ready，重跑 quality_filter.js」，就照做（回第 6 步再跑一次第 7 步），最多重複到腳本自己回報已達 3 輪上限或判定足夠為止——不要在 3 輪之外自己再手動加跑。
+8. **重新命名**：跑 `rename_sources.js <job-id>`。
+9. **逐題查詢**：跑 `query_answers.js <job-id>`，接著跑 `generate_report.js <job-id>` 產出 `research-report.md`——**這是給人類看的固定資產**，不要自己在對話裡手打報告內容。
+10. **交棒 ingest**：把 `research-report.md` 存進 `raw/deep-research/<job-id>/`（依現有 `raw/deep-research/readme.md` 規範），告知使用者可以呼叫 `wiki-ingest` 整理進 `wiki/`。
 
 ## 規則
 
 - **不寫死任何本機路徑**；job 狀態一律用 `RESEARCH_JOBS_DIR` 定位。
-- **不加鎖**：v3 架構已拍板單一使用者本機執行，`import_sources.js` 不需要、也不應該實作 SQLite 或檔案鎖。
-- **單筆匯入失敗不中斷整體**：`import_sources.js` 遇到單一來源匯入失敗要記錄錯誤繼續下一筆，嚴禁整個程序崩潰退出。
-- **`sources-report.md` 是唯一的人類可讀資產**：不要另外發明別的報告格式或在對話裡重新排版一次候選清單，一律靠 `generate_report.js` 產生、靠使用者直接開檔案看。
+- **不加鎖**：v3 架構已拍板單一使用者本機執行，不需要、也不應該實作 SQLite 或檔案鎖。
+- **notebook id 一旦解出來就只能用 `-n` 帶入，不能再用 `--title`**：任何重試/補研究路徑都必須重用既有 notebook，`--title` 只在整個 job 第一次呼叫 `research start` 時用一次，之後絕對不再出現，這是為了避免重演「一次中斷跑出好幾個重複 notebook」的 bug。
+- **CLI 呼叫成功就不要因為本地解析失敗而重試會建立資源的指令**：exit code 是判斷「這次呼叫要不要重試」的唯一依據，本地 regex/JSON 解析失敗只代表要如實回報、停下來，不代表可以假設「上次沒做」而重跑一次會建立新 notebook 或觸發副作用的指令。
+- **刪除來源一定要帶 `--confirm`**：`nlm source delete` 沒帶這個旗標會卡在互動式確認，在腳本裡等於卡死。
+- **Gemini 的結構化回應解析失敗時，不要自動代為判斷**：`quality_filter.js`／`recheck_sources.js`／`rename_sources.js` 任何一個解析失敗都會把原始回應存檔並以非零碼結束，呼叫端要如實轉告使用者，不要自己重新詮釋 Gemini 的自然語言回應去猜測該刪什麼、該不該視為足夠。
+- **`research-report.md` 是唯一的人類可讀資產**：一律靠 `generate_report.js` 產生。

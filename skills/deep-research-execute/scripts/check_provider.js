@@ -19,9 +19,25 @@ function locateNlm() {
   return 'nlm';
 }
 
+// 已驗證的最低版本，見 references/nlm-upgrade-guide.md「已知參數快照」。
+// 每次升級驗證通過後，兩處要一起更新。
+const MIN_VERSION = '0.9.14';
+
+function versionAtLeast(version, min) {
+  const v = version.split('.').map(Number);
+  const m = min.split('.').map(Number);
+  for (let i = 0; i < Math.max(v.length, m.length); i++) {
+    const a = v[i] || 0;
+    const b = m[i] || 0;
+    if (a > b) return true;
+    if (a < b) return false;
+  }
+  return true; // equal
+}
+
 function runCheck() {
   const nlmPath = locateNlm();
-  
+
   // Parse profile arg
   let profile = null;
   const args = process.argv;
@@ -35,19 +51,22 @@ function runCheck() {
       profile = resConfig.stdout.trim();
     }
   }
-  
+
   const status = {
     provider: 'notebooklm',
     cli_available: false,
     cli_version: null,
     cli_version_ok: false,
+    min_version_required: MIN_VERSION,
     authenticated: false,
-    profile: profile || 'work',
+    // 不猜測預設值——沒偵測到就是 null，呼叫端要自己從 profiles_available 挑，
+    // 不要沿用舊版寫死 'work' 的行為（曾經導致 spec.json 指定了不存在的 profile）。
+    profile: profile || null,
     profiles_available: [],
     notebooks_count: null,
     ready: false
   };
-  
+
   // 1. Check version
   const resVer = spawnSync(nlmPath, ['--version'], { encoding: 'utf8' });
   if (resVer.status === 0) {
@@ -55,10 +74,7 @@ function runCheck() {
     const match = resVer.stdout.match(/version\s+([0-9.]+)/i);
     if (match) {
       status.cli_version = match[1];
-      const parts = status.cli_version.split('.').map(Number);
-      if (parts[0] > 0 || (parts[0] === 0 && parts[1] > 8) || (parts[0] === 0 && parts[1] === 8 && parts[2] >= 9)) {
-        status.cli_version_ok = true;
-      }
+      status.cli_version_ok = versionAtLeast(status.cli_version, MIN_VERSION);
     }
   } else {
     console.log(JSON.stringify(status, null, 2));
