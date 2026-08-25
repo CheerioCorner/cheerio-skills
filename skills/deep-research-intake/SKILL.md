@@ -28,9 +28,14 @@ description: 引導使用者釐清與收斂研究意圖與範圍。當使用者�
 ## 產出 Job 資料夾與 spec.json
 
 1. 讀 `process.env.RESEARCH_JOBS_DIR`；沒設定就請使用者先設好，不要猜路徑或寫死本機路徑。
-2. Job ID 格式固定 `rc-YYYYMMDD-NNN`（同一天遞增序號，例如當天第一個是 `rc-20260823-001`）。
-3. **`profile` 欄位不要猜、不要沿用範本值**：跑一次 `node <deep-research-execute 路徑>/scripts/check_provider.js`，用回傳的 `profiles_available` 決定要填什麼；只有一個可用 profile 就直接用它，有多個就問使用者要用哪個。曾經因為範本值寫死 `"work"`，但實際環境只有 `personal` profile 而卡住。
-4. 建立 `<RESEARCH_JOBS_DIR>/<job-id>/spec.json`：
+2. **檢查是否已有相近主題的 job**：列出 `<RESEARCH_JOBS_DIR>/rc-*/spec.json`，讀每一個的 `query`（不用寫腳本，直接用 Glob/Read 掃過去即可），憑語意判斷有沒有跟這次主題明顯相近的既有 job。
+   - 沒有相近的 → 跳到步驟 3，照常開新 job。
+   - 有相近的 → 讀該 job 的 `checkpoint.json`（沒有就代表連 `run_research.js` 都還沒跑）。判斷是否已跑完：`checkpoint.stage` 是 `answered` 且 `research-report.md` 已存在，才算完成；其他情況一律視為進行中。
+     - **進行中**：告訴使用者「看起來已經有進行中的同主題研究 `<job-id>`（目前狀態：`<stage>`），因為 `deep-research-execute` 不支援對同一個 notebook 同時跑兩個 `research start`，建議等它跑完再繼續」。除非使用者明確說「不管、開新的」，否則不要建立新 job；也不要自己去啟動或續跑那個既有 job（那是 `deep-research-execute` 的責任）。
+     - **已完成**：問使用者是要「沿用它的 notebook 補充研究」（沿用時，直接把新 job 的 `spec.json.notebook_id` 設成該 job 的 `checkpoint.json.notebook_id`，並在對話中明確告知 `deep-research-execute`：這個 notebook 已存在，之後所有 `research start` 只能用 `-n`，絕對不能再用 `--title`）還是「開一個全新的、獨立的 notebook」。兩種都合法，問清楚就好。
+3. Job ID 格式固定 `rc-YYYYMMDD-NNN`（同一天遞增序號，例如當天第一個是 `rc-20260823-001`）。
+4. **`profile` 欄位不要猜、不要沿用範本值**：跑一次 `node <deep-research-execute 路徑>/scripts/check_provider.js`，用回傳的 `profiles_available` 決定要填什麼；只有一個可用 profile 就直接用它，有多個就問使用者要用哪個。曾經因為範本值寫死 `"work"`，但實際環境只有 `personal` profile 而卡住。
+5. 建立 `<RESEARCH_JOBS_DIR>/<job-id>/spec.json`：
 
 ```json
 {
@@ -55,9 +60,9 @@ description: 引導使用者釐清與收斂研究意圖與範圍。當使用者�
 }
 ```
 
-`sub_questions`（可選，預設空陣列）：`deep-research-execute` 的最後查詢階段會逐一問這裡列的問題；留空時只會問 `query` 本身這一題。`profile` 只是範例值，實際要填第 3 步驗證過的結果。
+`sub_questions`（可選，預設空陣列）：`deep-research-execute` 的最後查詢階段會逐一問這裡列的問題；留空時只會問 `query` 本身這一題。`profile` 只是範例值，實際要填第 4 步驗證過的結果。`notebook_id` 預設 `null`；只有在步驟 2 判斷要沿用既有 job 的 notebook 時才填入該 notebook 的 id，其餘情況一律留 `null` 讓 `run_research.js` 自己建立新 notebook。
 
-5. 告訴使用者這個 job ID，並說明可以交給 `deep-research-execute` 開始跑。
+6. 告訴使用者這個 job ID，並說明可以交給 `deep-research-execute` 開始跑。
 
 ## 規則
 

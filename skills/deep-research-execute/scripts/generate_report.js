@@ -25,6 +25,7 @@ function main() {
   const spec = readJson(path.join(jobDir, 'spec.json')) || {};
   const checkpoint = readJson(path.join(jobDir, 'checkpoint.json')) || {};
   const filterReport = readJson(path.join(jobDir, 'quality-filter-report.json'));
+  const distillReport = readJson(path.join(jobDir, 'distill-report.json'));
   const renameManifest = readJson(path.join(jobDir, 'rename-manifest.json'));
   const recheckLog = readJson(path.join(jobDir, 'recheck-log.json')) || [];
   const answers = readJson(path.join(jobDir, 'answers.json'));
@@ -47,11 +48,26 @@ function main() {
   if (recheckLog.length > 0) {
     lines.push(`- Recheck：共 ${recheckLog.length} 輪補充研究${checkpoint.recheck_outcome === 'exhausted' ? '（已達 3 輪上限，涵蓋範圍可能仍不完整）' : ''}`);
   }
+  if (distillReport && distillReport.status === 'applied') {
+    lines.push(`- 蒸餾必要性：${distillReport.before_count} → ${distillReport.after_count} 筆（移除 ${(distillReport.removed || []).length} 筆對研究問題無貢獻的來源）`);
+  }
   if (renameManifest) {
     const renamed = renameManifest.filter(m => m.status === 'renamed').length;
     lines.push(`- 來源分類/重新命名：${renamed} / ${renameManifest.length} 筆成功`);
   }
   lines.push('');
+
+  // nlm's citation objects only carry {source_id, citation_number, cited_text}
+  // — they never had title/name/url fields, those have to be resolved against
+  // the renamed source list (sources-final.json, falling back to
+  // rename-manifest.json for a title when a source didn't make the final cut).
+  const sourceById = new Map();
+  for (const s of finalSources) sourceById.set(s.id, s);
+  if (renameManifest) {
+    for (const m of renameManifest) {
+      if (!sourceById.has(m.source_id)) sourceById.set(m.source_id, { title: m.new_title });
+    }
+  }
 
   lines.push('## 研究結果');
   lines.push('');
@@ -63,8 +79,9 @@ function main() {
     if (a.citations && a.citations.length > 0) {
       lines.push('**引用來源：**');
       for (const c of a.citations) {
-        const label = c.title || c.name || c.url;
-        lines.push(c.url ? `- [${label}](${c.url})` : `- ${label}`);
+        const src = sourceById.get(c.source_id);
+        const label = (src && src.title) || c.source_id || '(未知來源)';
+        lines.push(src && src.url ? `- [${c.citation_number}] [${label}](${src.url})` : `- [${c.citation_number}] ${label}`);
       }
       lines.push('');
     }
@@ -74,6 +91,15 @@ function main() {
     lines.push('## 已移除的來源（品質過濾）');
     lines.push('');
     for (const r of filterReport.removed) {
+      lines.push(`- ${r.title} — ${r.reason}`);
+    }
+    lines.push('');
+  }
+
+  if (distillReport && distillReport.status === 'applied' && (distillReport.removed || []).length > 0) {
+    lines.push('## 已移除的來源（蒸餾必要性）');
+    lines.push('');
+    for (const r of distillReport.removed) {
       lines.push(`- ${r.title} — ${r.reason}`);
     }
     lines.push('');
