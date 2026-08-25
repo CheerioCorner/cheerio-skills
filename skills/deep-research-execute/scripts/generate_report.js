@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { validateJobId } = require('./lib/nlm_common');
 
 function readJson(filePath) {
   if (!fs.existsSync(filePath)) return null;
@@ -10,10 +11,7 @@ function readJson(filePath) {
 
 function main() {
   const jobId = process.argv[2];
-  if (!jobId) {
-    console.error('Usage: node generate_report.js <job-id>');
-    process.exit(1);
-  }
+  validateJobId(jobId);
 
   const jobsDir = process.env.RESEARCH_JOBS_DIR;
   if (!jobsDir) {

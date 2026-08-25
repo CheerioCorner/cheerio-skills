@@ -70,11 +70,24 @@ function extractStructuredAnswer(rawStdout) {
   return envelope;
 }
 
-function loadJob(jobId) {
+// Job ids are always minted by deep-research-intake as rc-YYYYMMDD-NNN (see its
+// SKILL.md). Enforcing that shape here closes off path traversal via a jobId
+// containing '..' or path separators before it ever reaches path.join(jobsDir, jobId).
+const JOB_ID_RE = /^rc-\d{8}-\d{3}$/;
+
+function validateJobId(jobId) {
   if (!jobId) {
     console.error("Usage: node <script>.js <job-id>");
     process.exit(1);
   }
+  if (!JOB_ID_RE.test(jobId)) {
+    console.error(`Invalid job id "${jobId}" — expected format rc-YYYYMMDD-NNN.`);
+    process.exit(1);
+  }
+}
+
+function loadJob(jobId) {
+  validateJobId(jobId);
   const jobsDir = process.env.RESEARCH_JOBS_DIR;
   if (!jobsDir) {
     console.error("RESEARCH_JOBS_DIR environment variable is not defined");
@@ -129,4 +142,4 @@ function queryNotebook(nlmPath, notebookId, question, profile, extraArgs) {
   return spawnSync(nlmPath, args, { encoding: 'utf8', timeout: 180000 });
 }
 
-module.exports = { locateNlm, stripAnsi, extractJson, extractStructuredAnswer, loadJob, saveCheckpoint, listSources, queryNotebook };
+module.exports = { locateNlm, stripAnsi, extractJson, extractStructuredAnswer, validateJobId, loadJob, saveCheckpoint, listSources, queryNotebook };

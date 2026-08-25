@@ -3,6 +3,7 @@
 const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { validateJobId } = require('./lib/nlm_common');
 
 function locateNlm() {
   const res = spawnSync('nlm', ['--version'], { encoding: 'utf8' });
@@ -94,10 +95,7 @@ function tryRecoverNotebookByTitle(nlmPath, title, profile) {
 async function main() {
   const nlmPath = locateNlm();
   const jobId = process.argv[2];
-  if (!jobId) {
-    console.error("Usage: node run_research.js <job-id>");
-    process.exit(1);
-  }
+  validateJobId(jobId);
 
   const jobsDir = process.env.RESEARCH_JOBS_DIR;
   if (!jobsDir) {
