@@ -101,6 +101,27 @@
     max-width: 62ch;
   }
 
+  /* ---- view switch tabs ---- */
+  .view-tabs {
+    display: flex;
+    gap: 8px;
+  }
+  .view-tab {
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .view-tab:hover { color: var(--ink); border-color: var(--line-assistant); }
+  .view-tab.active { background: var(--line-assistant); color: #fff; border-color: var(--line-assistant); }
+  .view { display: flex; flex-direction: column; gap: 32px; }
+  .view.hidden { display: none; }
+
   /* ---- diagram card ---- */
   .map-card {
     background: var(--surface);
@@ -383,6 +404,50 @@
   .card li { margin: 3px 0; }
   .card .foot { font-size: 12px; color: var(--muted); }
 
+  /* ---- task dashboard (kanban by status, flattened across all tracks) ---- */
+  .dash-intro { color: var(--muted); font-size: 13px; margin: 0; }
+  .dash-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 14px;
+    align-items: start;
+  }
+  .dash-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .dash-col-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .dash-col-head .title { font-weight: 700; font-size: 14px; }
+  .dash-count {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 1px 9px;
+  }
+  .dash-col .cards { grid-template-columns: 1fr; }
+  .dash-empty { font-size: 12.5px; color: var(--muted); padding: 4px 2px; }
+  .track-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .track-tag .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
   footer.page {
     font-size: 12.5px;
     color: var(--muted);
@@ -402,6 +467,13 @@
     <h1>Cheerio 路線圖 — 結構範本</h1>
     <p class="subtitle">這是 cheerio-roadmap 的通用結構範本，示範兩條軌道與全部站點狀態（今天可動手／進行中／排後面／已完成／決策點／關卡）。實際重繪時，站點資料從 <span class="mono">Obsidian/work/current.md</span> 現讀現組，不會複製這份範例。</p>
   </header>
+
+  <div class="view-tabs" role="tablist" aria-label="切換檢視模式">
+    <button type="button" class="view-tab active" data-view="roadmap" role="tab" aria-selected="true">🗺️ 路線圖</button>
+    <button type="button" class="view-tab" data-view="dashboard" role="tab" aria-selected="false">📋 Task Dashboard</button>
+  </div>
+
+  <div id="view-roadmap" class="view">
 
   <div class="map-card">
     <div class="zoom-toolbar">
@@ -444,6 +516,13 @@
   </div>
 
   <div id="cards-root"></div>
+
+  </div><!-- /#view-roadmap -->
+
+  <div id="view-dashboard" class="view hidden">
+    <p class="dash-intro">同一份工作資料，改用「狀態」而非「軌道」分組——不分領域，優先度一眼可見：最左欄是今天就能動手的，最右欄是已完成的。卡片內容與路線圖下方的任務卡完全同源。</p>
+    <div id="dashboard-root" class="dash-board"></div>
+  </div><!-- /#view-dashboard -->
 
   <footer class="page">
     這是通用結構範本，不含任何真實工作內容。實際重繪產出（含真實 work item）存在 <span class="mono">Obsidian/work/roadmap/cheerio-roadmap.html</span>，該檔案不隨這份 skill 同步進共用 repo。設計系統細節見 <span class="mono">SKILL.md</span>。
@@ -790,6 +869,65 @@
   }
 
   /* =========================================================================
+   * Render: task dashboard — same cards as cardSections, regrouped by STATUS
+   * (card.pill) instead of by track, so priority is visible without having
+   * to scan every track column. Order within a column is the order cards
+   * were authored in (i.e. work/current.md order = intended priority);
+   * no separate priority field to keep in sync. Dashboard cards get a
+   * "-dash" id suffix so they don't collide with the same card rendered
+   * in the track-grouped section above.
+   * ========================================================================= */
+  var DASH_COLUMNS = [
+    { pill: "today", title: "🔴 今天可直接動手" },
+    { pill: "wait", title: "🟡 進行中／等外部" },
+    { pill: "dim", title: "⚪ 排後面／有空再做" },
+    { pill: "done", title: "✅ 已完成" }
+  ];
+
+  function flattenCards(roadmap, lineColor) {
+    var flat = [];
+    roadmap.cardSections.forEach(function (section) {
+      section.cards.forEach(function (card) {
+        flat.push({ card: card, trackTitle: section.title, trackColor: lineColor[section.trackId] });
+      });
+    });
+    return flat;
+  }
+
+  function dashCardMarkup(entry) {
+    var card = entry.card;
+    var color = card.color || entry.trackColor;
+    var pillHtml = card.pill ? '<span class="pill ' + card.pill + '">' + card.pillText + '</span>' : "";
+    var footHtml = card.foot ? '<div class="foot">' + card.foot + '</div>' : "";
+    return '<div class="card" style="border-left-color:' + color + '">' +
+      '<div class="head"><span class="id">' + card.idText + '</span>' + pillHtml + '</div>' +
+      '<div class="name">' + card.name + '</div>' +
+      '<span class="track-tag"><span class="dot" style="background:' + entry.trackColor + '"></span>' + entry.trackTitle + '</span>' +
+      '<ul>' + card.bullets.map(function (b) { return "<li>" + b + "</li>"; }).join("") + '</ul>' +
+      footHtml +
+      '</div>';
+  }
+
+  function dashColumnMarkup(col, entries) {
+    var cardsHtml = entries.length
+      ? entries.map(dashCardMarkup).join("\n")
+      : '<div class="dash-empty">（沒有站點）</div>';
+    return '<div class="dash-col">' +
+      '<div class="dash-col-head"><span class="title">' + col.title + '</span><span class="dash-count">' + entries.length + '</span></div>' +
+      '<div class="cards">' + cardsHtml + '</div>' +
+      '</div>';
+  }
+
+  function renderDashboard(roadmap, lineColor) {
+    var flat = flattenCards(roadmap, lineColor);
+    var root = document.getElementById("dashboard-root");
+    root.innerHTML = DASH_COLUMNS.map(function (col) {
+      var entries = flat.filter(function (e) { return e.card.pill === col.pill; });
+      return dashColumnMarkup(col, entries);
+    }).join("\n");
+  }
+
+  /* =========================================================================
    * Run the renders, then wire up interaction (unchanged regardless of what
    * ROADMAP data is loaded — it only ever depends on DETAILS/LINE_COLOR and
    * on .node / .card elements existing in the DOM, which they now do because
@@ -797,6 +935,7 @@
    * ========================================================================= */
   renderSVG(ROADMAP);
   renderCards(ROADMAP, buildLineColor(ROADMAP));
+  renderDashboard(ROADMAP, buildLineColor(ROADMAP));
   var DETAILS = buildDetails(ROADMAP);
   var LINE_COLOR = buildLineColor(ROADMAP);
 
@@ -965,6 +1104,25 @@
   var mapCard = document.querySelector(".map-card");
   backToTop.addEventListener("click", function () {
     (mapCard || document.body).scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  /* ---- view switch: roadmap <-> task dashboard ---- */
+  var viewRoadmap = document.getElementById("view-roadmap");
+  var viewDashboard = document.getElementById("view-dashboard");
+  var viewTabs = document.querySelectorAll(".view-tab");
+  viewTabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      var target = tab.getAttribute("data-view");
+      viewTabs.forEach(function (t) {
+        var active = t === tab;
+        t.classList.toggle("active", active);
+        t.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      viewRoadmap.classList.toggle("hidden", target !== "roadmap");
+      viewDashboard.classList.toggle("hidden", target !== "dashboard");
+      if (target !== "roadmap") closeDetail();
+      backToTop.style.display = target === "roadmap" ? "" : "none";
+    });
   });
 })();
 </script>

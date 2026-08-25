@@ -56,6 +56,21 @@ description: 用地鐵路線圖風格的 HTML Artifact 呈現目前工作進度�
 - 圖表原生寬度固定（目前 1360px），外層用捲動而非壓縮字體；另外提供 ＋/－/重置縮放工具列
 - 箭頭 marker 用 `markerUnits="userSpaceOnUse"` 固定小尺寸，每條軌道各自一份顏色對應的 marker，不要共用單一黑色/currentColor marker（曾經因為跟著 stroke-width 縮放而爆大）
 - 頁面右下角固定一顆「⬆ 回到路線圖」按鈕（`.back-to-top`），任何捲動位置都常駐，點擊平滑捲回 `.map-card`（SVG 診斷圖本身，不是頁面最頂端）。手機寬度（≤640px）縮成純圖示。2026-08-23 Cheer 要求新增，往後重繪不用重新設計，照 template 抄
+- 標題下方有一組「🗺️ 路線圖／📋 Task Dashboard」切換分頁（`.view-tabs`），詳見下一節，往後重繪不用重新設計，照 template 抄
+
+## 兩種檢視：路線圖 vs Task Dashboard（2026-08-25 新增）
+
+**背景**：軌道（track）是依「領域/依賴關係」分組，同一軌道裡混著 ready/wait/dim/done 各種狀態，跨軌道看的話「今天該先做哪個」不容易一眼判斷。與其把每個 work item 拆成互不相關的孤立節點（會丟失同軌道內的依賴脈絡，且一樣看不出優先序)，改成**同一份資料、兩種檢視角度**：
+
+- **路線圖檢視**（`#view-roadmap`，預設顯示）＝ 現有的地鐵圖 + 下方依 track 分組的卡片區，看的是「這件事跟其他事的關係、脈絡」
+- **Task Dashboard 檢視**（`#view-dashboard`）＝ 同樣的卡片，改成依「狀態」分成 4 欄的看板（今天可動手／進行中／排後面／已完成），不分領域，看的是「我現在該做哪個」——最左欄就是答案
+
+兩顆按鈕在頁面上方（`.view-tabs`），點擊切換 `.view` 容器的 `.hidden` class，同時把右下角「回到路線圖」浮動按鈕一起隱藏/顯示（因為它只對路線圖檢視有意義）。
+
+**實作要點，重繪時不用重新設計**：
+- Dashboard 卡片**沒有另外寫一份資料**，是從 `ROADMAP.cardSections` 攤平重組來的（`flattenCards`/`renderDashboard`），依 `card.pill`（today/wait/dim/done）分桶，桶內順序＝原本在 `cardSections` 裡被寫入的順序，也就是重繪時你組資料的順序＝隱含的優先序。**不需要額外加 priority 數字欄位**——重繪時把每個 track 裡比較該優先處理的站點排前面寫進 `ROADMAP` 即可，兩種檢視會自動反映同一個順序
+- 每張 dashboard 卡片會多顯示一個「track-tag」（小色點 + 軌道名稱），因為離開了 track 分組，需要保留「這件事屬於哪個領域」的上下文
+- Dashboard 卡片 id 加了 `-dash` 後綴避免跟路線圖卡片區的原始 id 衝突（同一頁面兩份 DOM 都存在，只是用 `.hidden` 切換顯示）
 
 ## 檔案
 
