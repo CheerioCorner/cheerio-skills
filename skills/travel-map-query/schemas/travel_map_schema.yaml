@@ -4,10 +4,11 @@
 #   刻意放在 travel-map-query 底下：skills 以 `npx skills add` 逐目錄安裝，
 #   沒有 SKILL.md 的獨立 schema 目錄裝不進來。其餘 travel-map-* skill 一律跨目錄引用這一份。
 
-version: "1.3"
+version: "1.4"
 built: "2026-08-31"
 updated: "2026-09-06"
 changelog:
+  - "1.4 (2026-09-06) status_options 限制已由使用者在 Notion UI 手動解決：旅程/行程項目的狀態選項已補齊為設計提案的五段/四段式，known_limitations 標記已解決。修正 行程項目.狀態 屬性名稱曾被清空為空字串的問題（已用 DDL RENAME COLUMN 修正回「狀態」）。"
   - "1.3 (2026-09-06) 對齊 Notion 實況：補記旅程既有的原生 Place 欄位「地點」、補上捷克/布拉格/CZK 選項。"
   - "1.2 (2026-09-06) 加入語言功課相關：地方誌的主要語言/英文通用度、見聞錄的當地語言名稱，以及地方誌的 🗣️ 語言功課、🎫 票券與套票 兩節。"
   - "1.1 (2026-09-06) 加入決策型欄位：見聞錄的子類別/飲食適配/外部評分/評論數/評價查證日/座標/建議停留/來源連結/收集狀態，旅程的同行者組合。修正檔頭路徑。新增 references 區。"
@@ -215,7 +216,7 @@ notion_properties:
     狀態:
       type: status
       intended_options: ["💡 點子", "📝 規劃中", "✅ 已確認", "🧳 進行中", "🏁 已完成"]
-      note: "⚠️ Notion API 目前不支援用 DDL 自訂 status 選項，實際欄位還是預設的「未開始/進行中/完成」三段。使用前請先 fetch 這個 data source 確認目前實際選項，不要假設已經是五段式；如果人類已經在 Notion UI 手動改過，照實際選項使用。"
+      note: "✅ 2026-09-06 已由使用者在 Notion UI 手動補齊為五段式（不再是預設三段）。分組：待辦=💡點子/📝規劃中/✅已確認，進行中=🧳進行中，完成=🏁已完成。"
     日期區間:
       type: date
       description: "支援 range"
@@ -253,7 +254,7 @@ notion_properties:
     狀態:
       type: status
       intended_options: ["💡 候選", "⏳ 待確認", "✅ 已預訂", "🏁 已完成"]
-      note: "同旅程.狀態的限制，實際還是預設三段，使用前先 fetch 確認"
+      note: "✅ 2026-09-06 已由使用者在 Notion UI 手動補齊為四段式。分組：待辦=💡候選/⏳待確認，進行中=✅已預訂，完成=🏁已完成。"
     標籤:
       type: multi_select
       options: ["必去景點", "可選行程", "雨天備案", "親子友善", "拍照打卡"]
@@ -436,8 +437,9 @@ maturity_rules:
 # ──────────────────────────────────────────────────────────────
 known_limitations:
   - id: "status_options"
-    description: "notion-create-database / notion-update-data-source 的 DDL 不支援自訂 status 選項與分組，旅程.狀態與行程項目.狀態目前都還是 Notion 預設的「未開始/進行中/完成」三段，不是設計提案裡的五段/四段式。"
-    workaround: "人類需要在 Notion UI 手動編輯這兩個 status 欄位的選項與分組。Pi 操作前務必先 fetch 對應 data source 確認當下實際選項，不要假設。"
+    status: "✅ 已解決 2026-09-06"
+    description: "notion-create-database / notion-update-data-source 的 DDL 不支援自訂 status 選項與分組。使用者已在 Notion UI 手動把旅程.狀態補成五段式、行程項目.狀態補成四段式，與設計提案一致。"
+    workaround: "已完成，此條目保留作歷史紀錄。未來若又跑出新的 status 欄位（例如新資料庫），一樣需要人類在 UI 手動設定，DDL 做不到。"
   - id: "place_property"
     description: |
       DDL 沒有 PLACE/Location 類型，所以「行程項目.地點」「見聞錄.地點」目前都是 rich_text
