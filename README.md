@@ -39,6 +39,19 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 | gemini-notion-workflow | Gemini 存取 Notion API/CLI 的工具參考；實際呼叫透過 chat-with-gemini |
 | notion-cli | Notion CLI（`ntn`）命令參考 |
 
+### ✈️ Notion 旅遊地圖
+
+| Skill | 說明 |
+|-------|------|
+| travel-map-query | 查地方誌/見聞錄/旅程/行程項目（唯讀），schema SSOT 放在這個目錄下 |
+| travel-map-knowledge-capture | 建立/維護地方誌與見聞錄的記錄與分類屬性 |
+| travel-map-page-content | 查證後寫頁面正文，含評論歸納、飲食適配判定、語言功課、自駕實務 |
+| travel-map-trip-planner | 建立旅程、排入行程項目 |
+| travel-map-trip-feedback | 旅程完成後心得分流回寫，並更新成熟度/喜愛度 |
+
+> schema：`travel-map-query/schemas/travel_map_schema.yaml`（全系統 SSOT）
+> 飲食檔案：`travel-map-page-content/references/dining-profile.md`
+
 ### 🔬 深度研究
 
 | Skill | 說明 |
