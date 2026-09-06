@@ -1,0 +1,457 @@
+# Cheerio 旅遊地圖 Schema
+# SSOT for Notion properties, data source IDs, and page content templates
+# Location: skills/travel-map-query/schemas/travel_map_schema.yaml
+#   刻意放在 travel-map-query 底下：skills 以 `npx skills add` 逐目錄安裝，
+#   沒有 SKILL.md 的獨立 schema 目錄裝不進來。其餘 travel-map-* skill 一律跨目錄引用這一份。
+
+version: "1.3"
+built: "2026-08-31"
+updated: "2026-09-06"
+changelog:
+  - "1.3 (2026-09-06) 對齊 Notion 實況：補記旅程既有的原生 Place 欄位「地點」、補上捷克/布拉格/CZK 選項。"
+  - "1.2 (2026-09-06) 加入語言功課相關：地方誌的主要語言/英文通用度、見聞錄的當地語言名稱，以及地方誌的 🗣️ 語言功課、🎫 票券與套票 兩節。"
+  - "1.1 (2026-09-06) 加入決策型欄位：見聞錄的子類別/飲食適配/外部評分/評論數/評價查證日/座標/建議停留/來源連結/收集狀態，旅程的同行者組合。修正檔頭路徑。新增 references 區。"
+
+# ──────────────────────────────────────────────────────────────
+# Notion locations (workspace-level pages / databases)
+# ──────────────────────────────────────────────────────────────
+notion_locations:
+  hub_page:
+    title: "✈️ Cheerio 旅遊地圖"
+    url: "https://app.notion.com/p/3cd5979e3a8c812b9206ffff6eee557a"
+    page_id: "3cd5979e-3a8c-812b-9206-ffff6eee557a"
+    type: "workspace 頂層頁面（跟知識花園同級）"
+
+  地方誌:
+    database_url: "https://app.notion.com/p/6e7243c4a53a432f9552e1b929845cd8"
+    data_source_id: "99f772ab-a53d-4bb5-b1ee-a38cc4233725"
+    role: "目的地清單，旅程唯一會關聯的對象，刻意不收餐廳景點，維持精簡"
+
+  見聞錄:
+    database_url: "https://app.notion.com/p/4e07e815ac924df48fc1ad790bb8f76f"
+    data_source_id: "27089dea-1bcc-499a-b493-1c9dd9391cb9"
+    role: "掛在地方誌底下的具體條目：餐廳/景點/住宿/店家/主題筆記，會持續增加"
+
+  旅程:
+    database_url: "https://app.notion.com/p/1a80ca9a555a4321b9adeac5f582fdbf"
+    data_source_id: "96502e05-7219-4496-b157-2b4ebc2c466b"
+    role: "一頁一趟旅行，狀態涵蓋點子到已完成的生命週期"
+
+  行程項目:
+    database_url: "https://app.notion.com/p/e589e56e2e904fabae379e9fddd5bd9c"
+    data_source_id: "c5d7ce11-c7d7-43f5-8358-02301a324f39"
+    role: "共用底層資料庫，但只透過每趟旅程頁面內嵌的篩選檢視被看到，不是旅程的欄位"
+
+  example_trip_page:
+    title: "【範例】2026 東京賞櫻五日"
+    url: "https://app.notion.com/p/3cd5979e3a8c818aa3e1dfe593e76a07"
+    page_id: "3cd5979e-3a8c-818a-a3e1-dfe593e76a07"
+    role: "新增旅程時複製這一頁當模板，複製後務必修正內嵌行程項目檢視的篩選（見下方 known_limitations）"
+
+# ──────────────────────────────────────────────────────────────
+# Database Properties
+# ──────────────────────────────────────────────────────────────
+notion_properties:
+  地方誌:
+    條目名稱:
+      type: title
+      description: "洲/國家/城市或區域的名字，也可以是不是地方本身的主題筆記（如「德國自駕全解」）"
+    分類:
+      type: select
+      options: ["國內", "國外"]
+    洲:
+      type: select
+      options: ["亞洲", "歐洲", "美洲", "大洋洲", "非洲"]
+      note: "國內條目留空"
+    國家:
+      type: select
+      options: ["台灣", "日本", "泰國", "法國", "比利時", "捷克"]
+      note: "新國家直接在建立頁面時填入新值，Notion 會自動加入選項"
+    城市或區域:
+      type: select
+      options: ["新竹", "台東", "大阪", "東京", "布拉格"]
+      note: "選填，只在需要細分到城市/區域時才填；國家整體知識（如簽證）留空"
+    貨幣:
+      type: select
+      options: ["TWD", "JPY", "THB", "EUR", "USD", "CZK"]
+      note: "通常設在國家層級"
+    主要語言:
+      type: select
+      options: ["中文", "日文", "韓文", "泰文", "英文", "法文", "德文", "義大利文", "西班牙文", "捷克文", "荷蘭文"]
+      note: "新語言直接填新值。決定「🗣️ 語言功課」那一節要準備哪一種。"
+    英文通用度:
+      type: select
+      options:
+        - "🟢 幾乎都通"
+        - "🟡 觀光區可通"
+        - "🟠 只有年輕人/大城市"
+        - "🔴 幾乎不通"
+      note: |
+        Cheer 主要溝通語言是英文（自評不算好），所以這欄直接決定要投多少時間做語言功課。
+        🟠/🔴 的地方，「當地語言名稱」與翻譯卡片是必備，不是加分項。
+    成熟度:
+      type: select
+      options: ["🌱 蒐集中/未去過", "🌿 去過一次", "🌳 熟門熟路"]
+      note: "代表驗證程度，不是單純造訪次數"
+    喜愛度:
+      type: select
+      options: ["⭐️", "⭐️⭐️", "⭐️⭐️⭐️", "⭐️⭐️⭐️⭐️", "⭐️⭐️⭐️⭐️⭐️"]
+    去過次數:
+      type: rollup
+      description: "count，來自「關聯旅程」，自動計算不用手動填"
+    關聯旅程:
+      type: relation
+      description: "↔ 旅程，來自旅程.目的地的自動反查，不要手動在這裡建立關聯，去旅程那邊設定"
+    關聯見聞錄:
+      type: relation
+      description: "↔ 見聞錄，來自見聞錄.所屬地方誌的自動反查"
+    AI 摘要:
+      type: rich_text
+    最後更新:
+      type: date
+
+  見聞錄:
+    條目名稱:
+      type: title
+    類別:
+      type: select
+      options: ["🍽️ 餐廳", "🏛️ 景點", "🏨 住宿", "🛍️ 店家", "📚 主題筆記"]
+    所屬地方誌:
+      type: relation
+      description: "↔ 地方誌，必填單選——每一筆見聞錄都要掛在一個地方誌條目底下"
+    細部地點:
+      type: rich_text
+      description: "選填，如「心齋橋」「池上」，補充地方誌那層還沒細分到的定位"
+    當地語言名稱:
+      type: rich_text
+      description: |
+        店名/景點名的**當地語言原文**（如 "西湖春 / にしこはる"、"Kostel svatého Mikuláše"）。
+        非英語系國家的關鍵欄位：Google Maps 用原文才搜得準，計程車司機、路人問路
+        也是看原文才懂。英文通用度 🟠/🔴 的地方一律必填。
+    子類別:
+      type: multi_select
+      options:
+        - "正餐"
+        - "小吃"
+        - "甜點"
+        - "咖啡"
+        - "麵包烘焙"
+        - "在地市場"
+        - "歷史遺跡"
+        - "博物館美術館"
+        - "宗教建築"
+        - "自然景觀"
+        - "城鎮街區"
+        - "觀景點"
+        - "特色工藝"
+        - "紀念品"
+        - "書店"
+      note: "「類別」太粗，這一層才篩得出「甜點」「歷史遺跡」這種 Cheer 實際會用的切面。可複選。"
+    飲食適配:
+      type: multi_select
+      options:
+        - "🐄 有非牛主餐"
+        - "🥬 有素食主餐"
+        - "🌿 純蔬食餐廳"
+        - "🥕 原型食物友善"
+        - "🧂 可要求少鹽"
+        - "✅ 全家皆可"
+        - "⚠️ 部分成員不適合"
+        - "❓ 待確認菜單"
+      note: |
+        只有類別=🍽️ 餐廳 才填。判定依據見
+        travel-map-page-content/references/dining-profile.md，不要憑店名猜。
+        沒看到菜單一律填「❓ 待確認菜單」，不要空著也不要樂觀填。
+        「✅ 全家皆可」是結論欄，要同時滿足非牛主餐＋素食主餐＋可少鹽才給。
+    外部評分:
+      type: number
+      format: number
+      description: "Google Maps 星等，一位小數（如 4.3）"
+    評論數:
+      type: number
+      format: number
+      description: "評論則數——決定星等可不可信，4.9 但只有 12 則跟 4.3 有 8000 則是兩回事"
+    評價查證日:
+      type: date
+      description: "評分/評論是哪一天抓的，超過一年要重查"
+    座標:
+      type: rich_text
+      description: |
+        "緯度,經度"（如 "34.6687,135.5012"）。Notion API 建不了原生 Place 欄位
+        （見 known_limitations.place_property），但動線計算只需要數字，rich_text 足夠。
+        travel-map-route 靠這欄分群，briefing 靠這欄輸出 Google My Maps 匯入用 CSV。
+    建議停留:
+      type: number
+      format: number
+      description: "分鐘。動線排程用，查不到就依類型估（餐廳 90／博物館 120／教堂 40／觀景點 30）"
+    來源連結:
+      type: url
+      description: "當初看到這個地方的原始出處（影片/部落格/Google Maps 分享連結），半年後回頭確認「為什麼想去」用"
+    收集狀態:
+      type: select
+      options: ["📥 待分類", "✅ 已整理"]
+      note: "Inbox 模式批次收進來、還沒補齊所屬地方誌或內容的條目標「📥 待分類」，預設「✅ 已整理」"
+    成熟度:
+      type: select
+      options: ["🌱 蒐集中/未去過", "🌿 去過一次", "🌳 熟門熟路"]
+    喜愛度:
+      type: select
+      options: ["⭐️", "⭐️⭐️", "⭐️⭐️⭐️", "⭐️⭐️⭐️⭐️", "⭐️⭐️⭐️⭐️⭐️"]
+    去過次數:
+      type: rollup
+      description: "count，來自「相關行程項目」自動反查"
+    相關行程項目:
+      type: relation
+      description: "↔ 行程項目，來自行程項目.相關見聞錄的自動反查"
+    AI 摘要:
+      type: rich_text
+    最後更新:
+      type: date
+
+  旅程:
+    旅程名稱:
+      type: title
+      description: "如「2026/03 東京賞櫻五日」"
+    狀態:
+      type: status
+      intended_options: ["💡 點子", "📝 規劃中", "✅ 已確認", "🧳 進行中", "🏁 已完成"]
+      note: "⚠️ Notion API 目前不支援用 DDL 自訂 status 選項，實際欄位還是預設的「未開始/進行中/完成」三段。使用前請先 fetch 這個 data source 確認目前實際選項，不要假設已經是五段式；如果人類已經在 Notion UI 手動改過，照實際選項使用。"
+    日期區間:
+      type: date
+      description: "支援 range"
+    目的地:
+      type: relation
+      description: "↔ 地方誌，可複選（例：法國＋比利時、新竹＋台中）"
+    地點:
+      type: place
+      note: |
+        ⚠️ 這欄實際已存在於 Notion（原生 Place 類型），但 schema v1.0 沒有記錄。
+        代表這個 workspace 有辦法拿到 Place 欄位（DDL 建不出來，但 UI 建得出來且 API 讀得到）。
+        → 見聞錄若也想要原生地圖檢視，人類在 UI 加一個 Place 欄位即可，屆時把「座標」的值搬過去。
+    同行夥伴:
+      type: people
+    同行者組合:
+      type: multi_select
+      options: ["自己", "女朋友", "爸媽", "全家", "朋友", "同事"]
+      description: |
+        決定這趟的飲食限制要套哪幾條。排餐廳前先讀這欄，再對照
+        travel-map-page-content/references/dining-profile.md。
+        一個人出差跟帶全家出國，該推的餐廳不一樣。
+    預算總額:
+      type: number
+      format: new_taiwan_dollar
+    回顧心得:
+      type: rich_text
+      description: "完成後填寫，是回饋進地方誌/見聞錄的草稿來源"
+
+  行程項目:
+    活動名稱:
+      type: title
+    類型:
+      type: select
+      options: ["🗓️ 行程活動", "🍽️ 餐廳", "🏨 住宿", "🚗 交通", "📚 知識筆記"]
+    狀態:
+      type: status
+      intended_options: ["💡 候選", "⏳ 待確認", "✅ 已預訂", "🏁 已完成"]
+      note: "同旅程.狀態的限制，實際還是預設三段，使用前先 fetch 確認"
+    標籤:
+      type: multi_select
+      options: ["必去景點", "可選行程", "雨天備案", "親子友善", "拍照打卡"]
+    日期時間:
+      type: date
+    相關見聞錄:
+      type: relation
+      description: "↔ 見聞錄，選填但建議填；完成後靠這條關聯把心得寫回那一頁"
+    地點備用:
+      type: rich_text
+      description: "沒有對應見聞錄條目的臨時項目才用，例如機場報到"
+    所屬旅程:
+      type: relation
+      description: "↔ 旅程，必填——這是內嵌檢視篩選「只顯示這一趟」的依據"
+    預算:
+      type: number
+      format: new_taiwan_dollar
+    負責人:
+      type: people
+
+# ──────────────────────────────────────────────────────────────
+# Page content templates（頁面正文結構，不是 Properties）
+# ⚠️ 這裡只是概覽，不是唯一來源。實際可以直接拿來用的 markdown 骨架在
+#    travel-map-page-content/assets/templates/地方誌-content.md 與見聞錄-content.md；
+#    旅程頁面的完整版面原始碼在 travel-map-trip-planner/assets/example-trip-page.md。
+#    兩邊如果內容對不上，以那兩個 skill 目錄下的檔案為準，回頭更新這裡。
+# ──────────────────────────────────────────────────────────────
+page_content_templates:
+  地方誌:
+    sections:
+      - name: "📖 蒐集資料（未驗證）"
+        content: "簽證/入境須知、大眾運輸通則、習俗——來源可能是網路文章、朋友推薦，還沒被自己證實"
+      - name: "🚗 自駕實務"
+        content: |
+          國際駕照/行駛方向/限速與測速文化/停車與付費/加油/收費道路與電子標籤/當地潛規則。
+          與簽證同級：強制 Enriched ＋ 官方或高權威來源 ＋ 查證日期（ZTL、環保區貼紙、
+          vignette 這類寫錯是直接吃罰單）。評估「大眾運輸 vs 自駕」時讀這一節。
+      - name: "🏛️ 歷史脈絡速讀"
+        content: |
+          這個國家/城市的發展主線、幾個關鍵斷代、走在街上會看到什麼的原因。
+          歐洲條目必寫；這一節是行前包裡最有價值的內容，也是逛景點時的背景音。
+      - name: "🗣️ 語言功課"
+        content: |
+          Cheer 的主要溝通語言是英文（自評不好），所以這一節是「出發前在台灣做完、
+          到當地離線用」的實戰卡片，不是語言教學。固定內容：
+          ① 英文在當地實際通不通（比照 英文通用度 欄位，寫具體場景：機場通/餐廳不通）
+          ② 免責開場句——「我只會一點點，我們可以講英文嗎？」的當地語版本，Cheer 習慣先說這句
+          ③ 場景句型：點餐／結帳／購票／問路／購物殺價／求助，每句三行：
+             當地語原文 + 羅馬拼音 + **中文近似讀音**（要能直接唸出來，不是 IPA）
+          ④ 數字與金額怎麼說、怎麼比手勢
+          ⑤ 「指著就能用」的短句卡（給不方便開口時直接把手機給對方看）
+          這一節會被 travel-map-briefing 原封不動放進離線行前包。
+      - name: "🎫 票券與套票"
+        content: |
+          當地的景點套票/交通票券有哪些、各自涵蓋什麼、有效期、在哪買（線上/現場/超商）、
+          要不要事先預約時段。**不在這裡下結論說哪張最划算**——划不划算取決於這趟排了哪些點，
+          由 travel-map-route 拿實際行程去算。這一節只負責把選項與規則列清楚。
+      - name: "🗓️ 什麼時候去"
+        content: "季節與氣候、淡旺季、值得對準的節慶或自然事件（櫻花/極光/紅葉）、要避開的時段"
+      - name: "🛍️ 想帶回家"
+        content: |
+          當地特色工藝與紀念品、去哪買、大概價位、退稅門檻與流程。
+          旅程結束後由 travel-map-trip-feedback 把實際戰利品補進來，下次去同一國直接有清單。
+      - name: "💡 想做的事 / 下次想試"
+        content: "還沒鎖定具體餐廳/景點的模糊想法（checklist）。一旦鎖定成具體對象，升級成一頁見聞錄，不要留在這裡"
+      - name: "✅ 親身驗證心得"
+        content: "每趟旅程完成後，按日期補一段實際心得（國家/區域級的 SOP，如簽證怎麼辦最快）"
+
+  見聞錄:
+    sections:
+      - name: "📖 蒐集資料（未驗證）"
+        content: "為什麼想去、地址、座標、營業時間、價位、建議停留"
+      - name: "⭐ 評論重點"
+        content: |
+          外部評價的歸納，不是照抄。固定三行：好評共識／負評共識／踩雷風險。
+          這是 AI 幫 Cheer 省最多時間的一節——讀幾百則評論歸納共通點，比抄地址有價值。
+      - name: "🍽️ 飲食適配（僅餐廳）"
+        content: |
+          對照 dining-profile.md 逐條判定：非牛主餐／素食主餐（原型還是加工素肉）／能否少鹽。
+          每一條要指出依據（菜單頁面、評論提到、官網），沒依據就寫「待確認」。
+      - name: "🗣️ 點餐與菜單關鍵字（僅餐廳）"
+        content: |
+          想點的菜的當地語原文 ＋ 中文意思 ＋ 唸法，以及菜單上會出現的關鍵字對照
+          （牛/豬/雞/魚、素、辣、鹽、份量、套餐）——讓 Cheer 在現場能確認「我點到的
+          真的是我想吃的那道」，也能替媽媽避開牛、替女朋友確認是不是真的素。
+          附一句「請問這道有牛肉嗎／有素食嗎／可以少鹽嗎」的當地語問法。
+      - name: "🏛️ 背景故事／看點（僅景點）"
+        content: "這裡發生過什麼、為什麼重要、現場該注意看什麼。行前包會直接引用這一節。"
+      - name: "🎫 購票怎麼開口（僅景點）"
+        content: |
+          票種名稱的當地語原文與中文意思、成人/優待票怎麼講、是否吃套票、
+          現場買還是要線上預約時段，以及一句可以直接照唸的購票句。
+      - name: "✅ 親身驗證心得"
+        content: "去過之後：好不好吃/好不好玩，按日期記錄，多次造訪就多段"
+
+  旅程:
+    layout: "先確認 status 實際選項，再依照下面結構建立頁面"
+    blocks:
+      - "💱 這趟的即時匯率（embed，對應目的地貨幣）"
+      - "✅ 這趟待辦事項（checklist：簽證/機票/訂房）"
+      - "🗺️ 這趟的地圖（Google My Maps 分享連結，或行程項目地圖檢視）"
+      - "💡 點子收集箱（toggle 分類：餐廳候選/景點候選/住宿選項/交通方式，左欄）"
+      - "📋 行程項目——內嵌連結檢視，filter 所屬旅程 = 本頁（右欄，較寬）"
+      - "📝 回顧心得（完成後填）"
+
+# ──────────────────────────────────────────────────────────────
+# 行程項目 views（6 個 tab，皆已建立在資料庫本身，複製旅程頁面時沿用同一組視圖定義，
+# 但內嵌在旅程頁面裡的那個連結檢視是獨立設定，篩選值需要每趟旅程各自指定）
+# ──────────────────────────────────────────────────────────────
+views:
+  行程項目:
+    - name: "📋 每日行程"
+      type: table
+      sort: "日期時間 ASC"
+    - name: "📊 分類看板"
+      type: board
+      group_by: "類型"
+    - name: "📅 行事曆"
+      type: calendar
+      calendar_by: "日期時間"
+    - name: "📚 旅行知識"
+      type: table
+      filter: "類型 = 📚 知識筆記"
+    - name: "⏳ 候選／待確認"
+      type: table
+      filter: "狀態 = <未開始，或人類手動改過的候選/待確認選項>"
+    - name: "🗺️ 地圖"
+      status: "尚未建立——需要先在 Notion UI 手動幫「地點備用」或新欄位加上 Place/Location 屬性類型（API 無法建立），才能用 MAP BY 建立這個檢視"
+
+# ──────────────────────────────────────────────────────────────
+# 跨 skill 共用參考檔（各自寄居在需要它的 skill 目錄下，因為 npx skills add 逐目錄安裝）
+# ──────────────────────────────────────────────────────────────
+references:
+  dining_profile:
+    path: "travel-map-page-content/references/dining-profile.md"
+    role: "同行者飲食限制檔案。任何要判定餐廳適不適合、或要推薦餐廳的流程都必須先讀。"
+  notion_markdown_syntax:
+    path: "travel-map-page-content/references/notion-markdown-syntax.md"
+    role: "已驗證可用的 Notion 排版語法子集"
+  地方誌_template:
+    path: "travel-map-page-content/assets/templates/地方誌-content.md"
+  見聞錄_template:
+    path: "travel-map-page-content/assets/templates/見聞錄-content.md"
+  旅程_layout:
+    path: "travel-map-trip-planner/assets/example-trip-page.md"
+
+# ──────────────────────────────────────────────────────────────
+# 屬性寫入權責（v1.1 調整）
+# ──────────────────────────────────────────────────────────────
+write_ownership:
+  note: |
+    原則不變：一個資料庫只有一個 skill 能建記錄。但 v1.1 開了一個明確的例外——
+    「查證才知道的屬性」由查證的人回填，不再多繞一趟。
+  travel-map-knowledge-capture:
+    - "建立地方誌/見聞錄記錄本身"
+    - "分類/洲/國家/城市或區域/類別/所屬地方誌/細部地點/成熟度/收集狀態"
+  travel-map-page-content:
+    - "頁面正文全部"
+    - "查證後回填：外部評分、評論數、評價查證日、座標、建議停留、飲食適配、子類別、來源連結、AI 摘要、最後更新"
+    - "理由：這些欄位的值就是查證的產物，讓 page-content 直接寫回比丟回 capture 再寫一次少一次往返，也不會失真"
+  travel-map-trip-planner:
+    - "旅程/行程項目全部屬性（含同行者組合）"
+  travel-map-trip-feedback:
+    - "成熟度、喜愛度、地方誌/見聞錄的『✅ 親身驗證心得』區、旅程的回顧心得"
+
+# ──────────────────────────────────────────────────────────────
+# 成熟度與喜愛度規則（v1.1 新增，補上原本沒人負責的部分）
+# ──────────────────────────────────────────────────────────────
+maturity_rules:
+  成熟度:
+    - "🌱 蒐集中/未去過 → 預設值。就算已經寫了查證過的內容也還是 🌱，內容不等於驗證。"
+    - "🌿 去過一次 → 實際造訪過，由 travel-map-trip-feedback 在旅程完成時調整。"
+    - "🌳 熟門熟路 → 不自動升級。要造訪 2 次以上，且 Cheer 明確確認「這裡我熟」才給。"
+  喜愛度:
+    - "只有去過才填，由 travel-map-trip-feedback 寫入。"
+    - "feedback 流程必須針對每個造訪過的見聞錄問一次喜愛度，不要跳過——這欄空著整個系統就排不出「值得再去」的清單。"
+
+# ──────────────────────────────────────────────────────────────
+# Known limitations（Notion API / DDL 工具現有限制，非設計缺陷）
+# ──────────────────────────────────────────────────────────────
+known_limitations:
+  - id: "status_options"
+    description: "notion-create-database / notion-update-data-source 的 DDL 不支援自訂 status 選項與分組，旅程.狀態與行程項目.狀態目前都還是 Notion 預設的「未開始/進行中/完成」三段，不是設計提案裡的五段/四段式。"
+    workaround: "人類需要在 Notion UI 手動編輯這兩個 status 欄位的選項與分組。Pi 操作前務必先 fetch 對應 data source 確認當下實際選項，不要假設。"
+  - id: "place_property"
+    description: |
+      DDL 沒有 PLACE/Location 類型，所以「行程項目.地點」「見聞錄.地點」目前都是 rich_text
+      （地點備用/細部地點），不是原生地理座標欄位，因此「🗺️ 地圖」檢視還沒建立。
+      2026-09-06 補：旅程資料庫已經有一個原生 Place 類型的「地點」欄位（人類在 UI 建的），
+      證明限制只在 DDL，不在 workspace。
+    workaround: |
+      v1.1 起不再等 Notion：見聞錄新增 rich_text 的「座標」欄位存 "緯度,經度"，
+      動線計算（travel-map-route）與 Google My Maps 匯入 CSV（travel-map-briefing）都只需要數字，
+      rich_text 完全夠用。若之後仍想要 Notion 原生地圖檢視，人類再到 UI 手動把欄位改成 Place 類型即可，
+      屆時座標欄的既有資料可以直接沿用。
+  - id: "embedded_view_in_columns_layout"
+    description: "notion-create-view 的 parent_page_id 附加內嵌連結檢視時，如果頁面用 <columns> 分欄排版（例如旅程範例頁的「點子收集箱｜行程項目」左右並排），檢視沒辦法精準插進某一欄裡，會被加在整個 columns 區塊之後（例如落到『回顧心得』標題下面），不在視覺上預期的欄位裡。主頁本身用的是簡單分隔線排版，反而沒有這個問題，會正確落在對應標題下方。"
+    workaround: "人類可以在 Notion UI 手動把該內嵌檢視拖回正確的欄位裡，非必要（不影響功能，只影響排版美觀）。"
+  - id: "duplicate_trip_page_filter"
+    description: "複製範例旅程頁面建立新旅程時，頁面裡「行程項目（本趟）」那個內嵌連結檢視的篩選值仍然指向被複製的舊旅程頁面，不會自動變成新頁面自己。"
+    workaround: "複製完成後，一定要手動打開這個內嵌檢視的篩選設定，把「所屬旅程」的值改成新的旅程頁面本身，否則會顯示舊旅程的行程項目（或空白）。"
