@@ -4,10 +4,11 @@
 #   刻意放在 travel-map-query 底下：skills 以 `npx skills add` 逐目錄安裝，
 #   沒有 SKILL.md 的獨立 schema 目錄裝不進來。其餘 travel-map-* skill 一律跨目錄引用這一份。
 
-version: "1.5"
+version: "1.6"
 built: "2026-08-31"
 updated: "2026-09-06"
 changelog:
+  - "1.6 (2026-09-06) Phase 4：新增 travel-map-route（動線規劃，唯讀＋計算，內附 route_planner.py 地理排序腳本）與 travel-map-briefing（離線行前包＋地圖 CSV 產出，唯讀）。write_ownership 補上這兩個 skill 的定位（都不寫 Notion）。"
   - "1.5 (2026-09-06) 新增 Inbox 模式：travel-map-knowledge-capture 支援批次貼上連結/截圖收集，不確定所屬地方誌時關聯到固定佔位條目「📥 待分類（Inbox 佔位）」。已在 Notion 建立這個佔位頁面，記錄於 notion_locations。"
   - "1.4 (2026-09-06) status_options 限制已由使用者在 Notion UI 手動解決：旅程/行程項目的狀態選項已補齊為設計提案的五段/四段式，known_limitations 標記已解決。修正 行程項目.狀態 屬性名稱曾被清空為空字串的問題（已用 DDL RENAME COLUMN 修正回「狀態」）。"
   - "1.3 (2026-09-06) 對齊 Notion 實況：補記旅程既有的原生 Place 欄位「地點」、補上捷克/布拉格/CZK 選項。"
@@ -411,6 +412,13 @@ references:
     path: "travel-map-page-content/assets/templates/見聞錄-content.md"
   旅程_layout:
     path: "travel-map-trip-planner/assets/example-trip-page.md"
+  route_planner_script:
+    path: "travel-map-route/scripts/route_planner.py"
+    role: "地理排序與每日時數分天的計算工具（haversine 距離＋最近鄰貪婪排序），不含開放時間/三餐/套票判斷"
+  briefing_template:
+    path: "travel-map-briefing/assets/briefing-template.md"
+  my_maps_csv_example:
+    path: "travel-map-briefing/assets/my-maps-import-example.csv"
 
 # ──────────────────────────────────────────────────────────────
 # 屬性寫入權責（v1.1 調整）
@@ -430,6 +438,10 @@ write_ownership:
     - "旅程/行程項目全部屬性（含同行者組合）"
   travel-map-trip-feedback:
     - "成熟度、喜愛度、地方誌/見聞錄的『✅ 親身驗證心得』區、旅程的回顧心得"
+  travel-map-route:
+    - "無——唯讀＋計算 skill，排好的動線草案交給 travel-map-trip-planner 寫入行程項目"
+  travel-map-briefing:
+    - "無——唯讀 skill，只產出離線文件與 CSV，不寫 Notion"
 
 # ──────────────────────────────────────────────────────────────
 # 成熟度與喜愛度規則（v1.1 新增，補上原本沒人負責的部分）

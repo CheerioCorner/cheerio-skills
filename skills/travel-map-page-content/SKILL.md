@@ -198,5 +198,7 @@ Cheer 的主要溝通語言是英文而且自評不好，去的又常是非英�
 - `travel-map-knowledge-capture` — 地方誌／見聞錄的屬性與關聯寫入
 - `travel-map-trip-planner` — 旅程與行程項目的寫入
 - `travel-map-trip-feedback` — 旅程完成回饋分流
+- `travel-map-route` — 動線規劃會用到本 skill 查證的座標/開放時間
+- `travel-map-briefing` — 行前包會整合本 skill 查證的所有內容
 - `knowledge-garden-page-content` — 姊妹系統的內容生成 skill，Phase 結構高度相似，遇到不確定的判斷可以參考
 - `notion-cli` — Notion CLI 命令參考

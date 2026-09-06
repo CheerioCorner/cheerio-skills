@@ -48,6 +48,8 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 | travel-map-page-content | 查證後寫頁面正文，含評論歸納、飲食適配判定、語言功課、自駕實務 |
 | travel-map-trip-planner | 建立旅程、排入行程項目 |
 | travel-map-trip-feedback | 旅程完成後心得分流回寫，並更新成熟度/喜愛度 |
+| travel-map-route | 候選點動線規劃（唯讀＋計算，內附地理排序腳本），排好交給 trip-planner 寫入 |
+| travel-map-briefing | 離線行前包＋ Google My Maps 匯入 CSV 產出（唯讀） |
 
 > schema：`travel-map-query/schemas/travel_map_schema.yaml`（全系統 SSOT）
 > 飲食檔案：`travel-map-page-content/references/dining-profile.md`

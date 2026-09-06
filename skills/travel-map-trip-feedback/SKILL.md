@@ -46,3 +46,4 @@ description: >-
 - `travel-map-trip-planner` — 旅程與行程項目的寫入
 - `travel-map-knowledge-capture` — 地方誌與見聞錄的寫入
 - `travel-map-page-content` — 頁面內容查證與撰寫（心得的段落格式規則）
+- `travel-map-briefing` — 下一趟出發前可以把這次的心得一併整合進行前包

@@ -19,6 +19,8 @@ description: >-
 - 只是要「看/查」旅程或行程 → `travel-map-query`
 - 要「新增/修改地方誌或見聞錄」本身 → `travel-map-knowledge-capture`
 - 要「旅程完成、整理心得」→ `travel-map-trip-feedback`
+- 要「排動線」（一批候選點怎麼串成順暢行程）→ `travel-map-route`，排好後再回來這裡實際建立
+- 要「出行前包」→ `travel-map-briefing`
 
 ## 開工前必讀
 
@@ -54,4 +56,6 @@ description: >-
 - `travel-map-knowledge-capture` — 地方誌／見聞錄的寫入
 - `travel-map-trip-feedback` — 旅程完成回饋
 - `travel-map-page-content` — 頁面內容查證與撰寫
+- `travel-map-route` — 動線規劃，排好後交給本 skill 寫入
+- `travel-map-briefing` — 行程確定後產出離線行前包
 - `notion-cli` — Notion CLI 命令參考

@@ -88,4 +88,5 @@ description: >-
 - `travel-map-trip-planner` — 旅程與行程項目的寫入
 - `travel-map-trip-feedback` — 旅程完成回饋
 - `travel-map-page-content` — 頁面內容查證與撰寫
+- `travel-map-route` — 候選點排動線
 - `notion-cli` — Notion CLI 命令參考
