@@ -4,10 +4,11 @@
 #   刻意放在 travel-map-query 底下：skills 以 `npx skills add` 逐目錄安裝，
 #   沒有 SKILL.md 的獨立 schema 目錄裝不進來。其餘 travel-map-* skill 一律跨目錄引用這一份。
 
-version: "1.4"
+version: "1.5"
 built: "2026-08-31"
 updated: "2026-09-06"
 changelog:
+  - "1.5 (2026-09-06) 新增 Inbox 模式：travel-map-knowledge-capture 支援批次貼上連結/截圖收集，不確定所屬地方誌時關聯到固定佔位條目「📥 待分類（Inbox 佔位）」。已在 Notion 建立這個佔位頁面，記錄於 notion_locations。"
   - "1.4 (2026-09-06) status_options 限制已由使用者在 Notion UI 手動解決：旅程/行程項目的狀態選項已補齊為設計提案的五段/四段式，known_limitations 標記已解決。修正 行程項目.狀態 屬性名稱曾被清空為空字串的問題（已用 DDL RENAME COLUMN 修正回「狀態」）。"
   - "1.3 (2026-09-06) 對齊 Notion 實況：補記旅程既有的原生 Place 欄位「地點」、補上捷克/布拉格/CZK 選項。"
   - "1.2 (2026-09-06) 加入語言功課相關：地方誌的主要語言/英文通用度、見聞錄的當地語言名稱，以及地方誌的 🗣️ 語言功課、🎫 票券與套票 兩節。"
@@ -42,6 +43,16 @@ notion_locations:
     database_url: "https://app.notion.com/p/e589e56e2e904fabae379e9fddd5bd9c"
     data_source_id: "c5d7ce11-c7d7-43f5-8358-02301a324f39"
     role: "共用底層資料庫，但只透過每趟旅程頁面內嵌的篩選檢視被看到，不是旅程的欄位"
+
+  inbox_placeholder:
+    title: "📥 待分類（Inbox 佔位）"
+    url: "https://app.notion.com/p/3d35979e3a8c813c85dfeafdf7b09d31"
+    page_id: "3d35979e-3a8c-813c-85df-eafdf7b09d31"
+    role: |
+      地方誌資料庫裡的固定佔位條目，不是真正的目的地。travel-map-knowledge-capture
+      的 Inbox 模式在批次收集時，遇到當下判斷不出所屬城市/國家的項目就先關聯到這裡，
+      收集狀態標「📥 待分類」，之後由使用者確認真正地方誌再改過去。
+      不要把這個條目排進任何旅程，也不要幫它寫「蒐集資料」「歷史脈絡」這類正文內容。
 
   example_trip_page:
     title: "【範例】2026 東京賞櫻五日"

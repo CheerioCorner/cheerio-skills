@@ -45,9 +45,16 @@ description: >-
 - 只查 Properties 就回答視為查詢未完成
 - 不確定的資訊要說明是從哪一頁查到的，方便使用者回頭核對
 
+### 3. 查 Inbox 待分類清單
+使用者問「還有哪些待分類」「Inbox 清一下」時，查見聞錄 `所屬地方誌` = 地方誌裡的
+「📥 待分類（Inbox 佔位）」條目，或 `收集狀態` = `📥 待分類` 的見聞錄，列出來讓
+使用者一次歸位。這批是 `travel-map-knowledge-capture` 的 Inbox 模式批次收進來、
+還沒確定真正城市/國家的項目，正常查詢（流程 1/2）不會特別找到它們——它們掛在
+一個佔位條目底下，不屬於任何真正的地方誌。
+
 ## 相關 Skills
 - `travel-map-trip-planner` — 旅程與行程項目的寫入
-- `travel-map-knowledge-capture` — 地方誌與見聞錄的寫入
+- `travel-map-knowledge-capture` — 地方誌與見聞錄的寫入（含 Inbox 批次收集模式）
 - `travel-map-trip-feedback` — 旅程完成回饋
 - `travel-map-page-content` — 頁面內容查證與撰寫
 - `notion-cli` — Notion CLI 命令參考
