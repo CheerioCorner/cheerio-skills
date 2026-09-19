@@ -83,6 +83,7 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 | to-spec | 把目前對話整理成 spec 並發布到 issue tracker |
 | to-tickets | 把 plan/spec/對話拆成 tracer-bullet tickets |
 | skill-creator | 建立、修改、優化 skill，跑 eval 測效果 |
+| skill-intent-decomposition | 在寫任何 SKILL.md 之前，先把人類意圖攤開畫成決策樹，決定一個領域要拆幾支 skill、邊界切哪裡（定案後接 skill-creator） |
 | find-skills | 幫使用者找到並安裝合適的 agent skill |
 
 ### 🖊️ Plannotator
@@ -142,6 +143,7 @@ skills/
 ├── round-table/
 ├── setup-matt-pocock-skills/
 ├── skill-creator/
+├── skill-intent-decomposition/
 ├── tdd/
 ├── to-presentation/
 ├── to-spec/
