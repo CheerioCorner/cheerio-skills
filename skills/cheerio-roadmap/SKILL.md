@@ -49,8 +49,9 @@ description: 用地鐵路線圖風格的 HTML Artifact 呈現目前工作進度�
 
 ## 設計系統（不要重新發明，照 references/template.html 抄）
 
-- 字型：Noto Sans TC（標題/內文，含中文）＋ IBM Plex Mono（ID／日期／數字，等寬對齊）
-- 配色 token：`--line-*` 系列給軌道上色，`--accent-today` 專門標記「今天」與「決策點」，深淺主題都要定義（見 template 的 `:root` / `prefers-color-scheme` / `[data-theme]` 三層）
+> **2026-09-19 換皮不換骨**：色票／字體改套 [diagram-design](https://github.com/cathrynlavery/diagram-design) 官方 style-guide 的 editorial skin 語意角色（`paper`/`ink`/`muted`/`soft`/`accent` 對應成 `--bg`/`--ink`/`--muted`/`--soft`/`--accent-today`），六軌道需要互相區分的多線色比照該指南「series palette（多系列圖表專用）」的除色邏輯做成去飽和編輯色，`accent` 仍只保留給「今天／可動手／決策點」這個唯一焦點（不可有第二個 accent）。`ROADMAP` 資料物件、拖曳 popover、zoom 工具列、Read more 高亮、back-to-top 這些互動邏輯（骨）完全沒動，純換色票／字體（皮）。diagram-design 本身不拿來用（它是泛用靜態圖表生成器，沒有這裡需要的拖曳/zoom/持續更新單一 Artifact 這套機制），只借它的視覺語言。
+- 字型：Instrument Serif（H1 標題，中文用 Noto Serif TC 補 Han）＋ Geist（內文/標籤，中文用 Noto Sans TC 補 Han）＋ Geist Mono（ID／日期／數字，等寬對齊，Fallback 到 IBM Plex Mono）。中文 eyebrow 文字不套用英文語境的大寫轉換與寬追蹤（Han register-switch）
+- 配色 token：`--line-*` 系列給軌道上色（6 條去飽和編輯色，各軌道獨立一色），`--accent-today` 專門標記「今天」與「決策點」這個唯一焦點，`--muted`/`--soft` 兩級次要文字色階，深淺主題都要定義（見 template 的 `:root` / `prefers-color-scheme` / `[data-theme]` 三層）
 - 站點一律可點擊，點下去彈出可拖移、指向該站點的浮動卡片（`position:fixed`，不會被頁面捲動吃掉）
 - 浮動卡片有「Read more →」導到下方對應的完整任務卡片並閃爍高亮
 - 圖表原生寬度固定（目前 1360px），外層用捲動而非壓縮字體；另外提供 ＋/－/重置縮放工具列
