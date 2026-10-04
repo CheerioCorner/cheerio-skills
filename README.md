@@ -69,7 +69,7 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 | wiki-lint | 健康檢查（結構+品質+半衰期+矛盾+Source Fidelity+遺漏稽核，能自動處理就不等人類） |
 | wiki-query | 查詢 wiki 內容，高價值洞察全自動回填 |
 | work-tracker | 管理 `work/` 可追溯工作狀態 |
-| cheerio-roadmap | 地鐵路線圖風格 Artifact 呈現工作進度，問進度/更新 work 時自動重繪同一個連結 |
+| cheerio-roadmap | 「駕駛艙」Artifact：決策台／看板／支線圖／細節四層，問進度/更新 work 時自動重繪同一個連結（需 diagram-design plugin） |
 | learning-loop | 任務完成後自動提取學到的東西、分析工作模式、追蹤 skill 效果 |
 
 ### 🛠️ 工程輔助
@@ -83,6 +83,7 @@ npx skills add CheerioCorner/cheerio-skills --all -g -a pi
 | to-spec | 把目前對話整理成 spec 並發布到 issue tracker |
 | to-tickets | 把 plan/spec/對話拆成 tracer-bullet tickets |
 | skill-creator | 建立、修改、優化 skill，跑 eval 測效果 |
+| skill-intent-decomposition | 在寫任何 SKILL.md 之前，先把人類意圖攤開畫成決策樹，決定一個領域要拆幾支 skill、邊界切哪裡（定案後接 skill-creator） |
 | find-skills | 幫使用者找到並安裝合適的 agent skill |
 
 ### 🖊️ Plannotator
@@ -142,6 +143,7 @@ skills/
 ├── round-table/
 ├── setup-matt-pocock-skills/
 ├── skill-creator/
+├── skill-intent-decomposition/
 ├── tdd/
 ├── to-presentation/
 ├── to-spec/
